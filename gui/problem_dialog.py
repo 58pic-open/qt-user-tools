@@ -7,9 +7,11 @@
 
 import os
 import sys
+import platform
+from typing import Optional
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QProgressBar, QTextEdit, QMessageBox, QScrollArea, QWidget
+    QProgressBar, QTextEdit, QMessageBox, QScrollArea, QWidget, QToolButton, QTabWidget
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QPixmap
@@ -86,6 +88,156 @@ PROBLEM_DESCRIPTIONS = {
         'solution': '需要清除Safari浏览器的缓存和数据，然后重启浏览器。',
     },
 }
+
+def _get_manual_steps(problem_type: str, system_override: Optional[str] = None) -> str:
+    """
+    生成“手动操作步骤”说明（根据系统切换）。
+
+    注意：此处面向非技术同事，尽量做到可照抄、可转发给技术同事协助。
+    """
+    system = system_override or platform.system()
+
+    def _how_to_open_cli_windows() -> str:
+        return (
+            "【如何打开 Windows 命令行】\n"
+            "方法1：打开 CMD\n"
+            "  1) 按 Win 键\n"
+            "  2) 输入：cmd\n"
+            "  3) 回车\n\n"
+            "方法2：以管理员身份打开 CMD（推荐）\n"
+            "  1) 按 Win 键\n"
+            "  2) 输入：cmd\n"
+            "  3) 右键“命令提示符” → 以管理员身份运行\n\n"
+            "方法3：打开 PowerShell\n"
+            "  1) 按 Win + X\n"
+            "  2) 选择“终端/Windows PowerShell”\n"
+        )
+
+    def _how_to_open_terminal_macos() -> str:
+        return (
+            "【如何打开 macOS 终端】\n"
+            "方法1：Spotlight\n"
+            "  1) 按 ⌘ + 空格\n"
+            "  2) 输入：终端（Terminal）\n"
+            "  3) 回车\n\n"
+            "方法2：Finder\n"
+            "  应用程序 → 实用工具 → 终端\n"
+        )
+
+    def _dynamic_ip_howto(domain: str) -> str:
+        return (
+            "【先获取最优IP】\n"
+            "方法A（推荐，最简单）：\n"
+            f"  1) 打开 17ce.com\n  2) 选择 PING 测试\n  3) 输入域名：{domain}\n"
+            "  4) 在结果里找“最快/延迟最低”的节点 IP（IPv4）\n\n"
+            "方法B（你电脑有 Python 时）：\n"
+            f"  在命令行执行：python hosts/get_domain_ip.py {domain}\n"
+            "  复制输出的 IPv4 地址\n\n"
+            "提示：有时本地 DNS 解析会失败，17ce 的结果更可靠。"
+        )
+
+    # 每个问题对应的“你要改什么”
+    # 固定 IP 的直接写死，动态 IP 的提供“自己获取最优IP”的方法。
+    domain_block = ""
+    if problem_type == "preview":
+        domain_block = (
+            _dynamic_ip_howto("preview.qiantucdn.com")
+            + "\n\n【要绑定】\n<上一步获取的IP>    preview.qiantucdn.com"
+        )
+    elif problem_type == "js":
+        domain_block = (
+            _dynamic_ip_howto("js.qiantucdn.com")
+            + "\n\n【要绑定】\n<上一步获取的IP>    js.qiantucdn.com"
+        )
+    elif problem_type == "icon":
+        domain_block = (
+            _dynamic_ip_howto("icon.qiantucdn.com")
+            + "\n\n【要绑定】\n<上一步获取的IP>    icon.qiantucdn.com"
+        )
+    elif problem_type == "download":
+        domain_block = "【要绑定】\n47.104.5.133    dl.58pic.com"
+    elif problem_type == "cloud":
+        domain_block = "【要绑定】\n118.190.104.146    y.58pic.com"
+    elif problem_type == "main_site":
+        domain_block = "【要绑定】\n47.104.159.75    www.58pic.com\n47.104.159.75    qiye.58pic.com"
+    elif problem_type == "download_fail":
+        domain_block = (
+            "【先获取最优IP（不需要技术同事）】\n"
+            "建议依次对下面 3 个域名用 17ce.com 做 PING，分别拿到各自的最快 IPv4：\n"
+            "  - proxy-rar.58pic.com\n  - proxy-vip.58pic.com\n  - proxy-vd.58pic.com\n\n"
+            "（如果你只想先试一个：优先从 proxy-rar.58pic.com 开始）\n\n"
+            "【要绑定】\n"
+            "<对应域名获取的IP>    proxy-rar.58pic.com\n"
+            "<对应域名获取的IP>    proxy-vip.58pic.com\n"
+            "<对应域名获取的IP>    proxy-vd.58pic.com"
+        )
+    elif problem_type == "unbind_preview":
+        domain_block = "【要解绑】\n从 hosts 文件中删除包含 preview.qiantucdn.com 的那一行（或在行首加 # 注释掉）。"
+    else:
+        domain_block = "（此问题类型暂无手动步骤）"
+
+    common_after = (
+        "\n\n【改完必须做】\n"
+        "1) 清 DNS 缓存（让修改立即生效）\n"
+        "2) 刷新页面（建议强制刷新）或完全退出浏览器重开\n"
+        "3) 仍不生效：清浏览器缓存或重启电脑"
+    )
+
+    if system == "Windows":
+        return (
+            "手动操作步骤（Windows）\n\n"
+            + _how_to_open_cli_windows()
+            + "\n\n"
+            "【1】找到 hosts 文件\n"
+            "路径：C:\\Windows\\System32\\drivers\\etc\\hosts\n\n"
+            "【2】用管理员权限编辑（推荐记事本）\n"
+            "开始菜单搜索“记事本” → 右键 → 以管理员身份运行\n"
+            "记事本：文件 → 打开 → 右下角文件类型选“所有文件(*.*)” → 打开 hosts\n\n"
+            "【3】先备份\n"
+            "把 hosts 另存一份，例如：hosts.backup\n\n"
+            "【4】按本问题追加/删除内容\n"
+            f"{domain_block}\n\n"
+            "【5】保存\n"
+            "Ctrl+S\n\n"
+            "【6】清 DNS 缓存（管理员 CMD）\n"
+            "ipconfig /flushdns"
+            + common_after
+        )
+
+    if system == "Darwin":
+        return (
+            "手动操作步骤（macOS）\n\n"
+            + _how_to_open_terminal_macos()
+            + "\n\n"
+            "【1】hosts 文件路径\n"
+            "/etc/hosts\n\n"
+            "【2】先备份（推荐）\n"
+            "sudo cp /etc/hosts /etc/hosts.backup\n\n"
+            "【3】用管理员权限编辑（nano 示例）\n"
+            "sudo nano /etc/hosts\n\n"
+            "【4】按本问题追加/删除内容\n"
+            f"{domain_block}\n\n"
+            "【5】保存并退出（nano）\n"
+            "Ctrl+O 保存 → 回车确认 → Ctrl+X 退出\n\n"
+            "【6】清 DNS 缓存\n"
+            "sudo dscacheutil -flushcache\n"
+            "sudo killall -HUP mDNSResponder"
+            + common_after
+        )
+
+    # Linux/其他系统：给一个通用版
+    return (
+        "手动操作步骤（通用/Linux）\n\n"
+        "【1】hosts 文件路径（常见）\n"
+        "/etc/hosts\n\n"
+        "【2】用管理员权限编辑\n"
+        "sudo nano /etc/hosts\n\n"
+        "【3】按本问题追加/删除内容\n"
+        f"{domain_block}\n\n"
+        "【4】清 DNS 缓存\n"
+        "不同发行版命令不同，可先重启网络/重启电脑，或联系技术同事协助。"
+        + common_after
+    )
 
 
 class FixWorker(QThread):
@@ -227,6 +379,72 @@ class ProblemDialog(QDialog):
         desc_text.setText(problem_info.get('description', ''))
         desc_text.setStyleSheet("background-color: #f5f5f5; border-radius: 6px; padding: 10px;")
         layout.addWidget(desc_text)
+
+        # 手动修复步骤（放在最靠上位置，避免用户看不到）
+        if self.problem_type != 'safari_cache':
+            manual_toggle_top = QToolButton()
+            manual_toggle_top.setCheckable(True)
+            manual_toggle_top.setChecked(True)  # 默认展开，确保用户能看到
+            manual_toggle_top.setText("🧩 手动修复步骤（不用点“立即修复”也能自己改）")
+            manual_toggle_top.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+            manual_toggle_top.setCursor(Qt.CursorShape.PointingHandCursor)
+            manual_toggle_top.setStyleSheet(
+                "QToolButton { text-align: left; font-weight: bold; padding: 6px 4px; }"
+                "QToolButton:hover { color: #1890ff; }"
+            )
+            layout.addWidget(manual_toggle_top)
+
+            # Tab：允许切换查看其它系统的文档，默认是当前系统
+            manual_tabs = QTabWidget()
+            manual_tabs.setStyleSheet(
+                "QTabWidget::pane { border: 0; }"
+                "QTabBar::tab { padding: 8px 12px; border: 1px solid #e0e0e0; border-bottom: 0; "
+                "border-top-left-radius: 8px; border-top-right-radius: 8px; background: #fafafa; }"
+                "QTabBar::tab:selected { background: #ffffff; font-weight: bold; }"
+            )
+
+            def _make_manual_tab(text: str) -> QWidget:
+                w = QWidget()
+                v = QVBoxLayout()
+                v.setContentsMargins(0, 0, 0, 0)
+                te = QTextEdit()
+                te.setReadOnly(True)
+                te.setMinimumHeight(190)
+                te.setMaximumHeight(300)
+                te.setText(text)
+                te.setStyleSheet("background-color: #f5f5f5; border-radius: 6px; padding: 12px; font-size: 12px;")
+                v.addWidget(te)
+                w.setLayout(v)
+                # 便于 toggle 时统一隐藏
+                w._manual_textedit = te  # type: ignore[attr-defined]
+                return w
+
+            win_tab = _make_manual_tab(_get_manual_steps(self.problem_type, system_override="Windows"))
+            mac_tab = _make_manual_tab(_get_manual_steps(self.problem_type, system_override="Darwin"))
+            linux_tab = _make_manual_tab(_get_manual_steps(self.problem_type, system_override="Linux"))
+
+            manual_tabs.addTab(win_tab, "Windows")
+            manual_tabs.addTab(mac_tab, "macOS")
+            manual_tabs.addTab(linux_tab, "通用/Linux")
+
+            current_system = platform.system()
+            if current_system == "Windows":
+                manual_tabs.setCurrentIndex(0)
+            elif current_system == "Darwin":
+                manual_tabs.setCurrentIndex(1)
+            else:
+                manual_tabs.setCurrentIndex(2)
+
+            layout.addWidget(manual_tabs)
+
+            def _toggle_manual_top(checked: bool):
+                manual_tabs.setVisible(checked)
+                manual_toggle_top.setText(
+                    "🧩 手动修复步骤（不用点“立即修复”也能自己改）" if checked else "🧩 手动修复步骤（点我展开）"
+                )
+
+            manual_toggle_top.toggled.connect(_toggle_manual_top)
+            _toggle_manual_top(True)
         
         # 问题示例图片（显示缩略图，点击可放大）
         images = PROBLEM_IMAGES.get(self.problem_type, [])
@@ -367,7 +585,7 @@ class ProblemDialog(QDialog):
             solution_text.setText(problem_info.get('solution', ''))
             solution_text.setStyleSheet("background-color: #f5f5f5; border-radius: 6px; padding: 10px;")
             layout.addWidget(solution_text)
-            
+
             # 进度区域
             progress_label = QLabel("🌐 修复进度")
             progress_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))

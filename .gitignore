@@ -54,6 +54,7 @@ build/
 *.log
 *.cache
 dmg_temp_dir/
+resources/app_icon.iconset/
 
 # OS
 .DS_Store

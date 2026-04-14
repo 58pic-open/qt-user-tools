@@ -188,22 +188,41 @@ build_mac_arm64() {
     echo -e "${BLUE}  打包 macOS ARM64 (M1/M2)${NC}"
     echo -e "${BLUE}========================================${NC}"
     
-    # 查找 ARM64 Python
-    PYTHON_BIN=$(find_python_by_arch "arm64")
-    
-    if [ -z "$PYTHON_BIN" ]; then
-        echo -e "${YELLOW}未找到 ARM64 Python，尝试使用当前 Python...${NC}"
-        PYTHON_BIN=$(which python3)
+    # 查找 ARM64 Python（优先使用系统 Python，避免 conda 污染导致 PyInstaller 失败）
+    PYTHON_BASE=$(find_python_by_arch "arm64")
+    if [ -z "$PYTHON_BASE" ] && [ -x "/usr/bin/python3" ]; then
+        # macOS 自带 python3 通常可用，且更“干净”
+        SYS_ARCH=$(/usr/bin/python3 -c "import platform; print(platform.machine())" 2>/dev/null || echo "")
+        if [ "$SYS_ARCH" = "arm64" ]; then
+            PYTHON_BASE="/usr/bin/python3"
+        fi
     fi
-    
-    echo -e "${GREEN}使用 Python: $PYTHON_BIN${NC}"
-    
-    # 安装依赖
-    $PYTHON_BIN -m pip install -r requirements.txt --quiet 2>/dev/null || true
+    if [ -z "$PYTHON_BASE" ]; then
+        echo -e "${YELLOW}未找到干净的 ARM64 Python，尝试使用当前 python3（可能受 conda 影响）...${NC}"
+        PYTHON_BASE=$(which python3)
+    fi
+
+    echo -e "${GREEN}基础 Python: $PYTHON_BASE${NC}"
     
     # 创建构建目录
     BUILD_SUBDIR="$BUILD_DIR/mac_arm64"
     mkdir -p "$BUILD_SUBDIR"
+
+    # 在构建目录中创建独立 venv，避免 conda/site-packages 污染
+    VENV_DIR="$BUILD_SUBDIR/venv"
+    PYTHON_BIN="$VENV_DIR/bin/python3"
+    if [ ! -x "$PYTHON_BIN" ]; then
+        echo -e "${BLUE}创建独立虚拟环境（venv）...${NC}"
+        "$PYTHON_BASE" -m venv "$VENV_DIR"
+    fi
+    echo -e "${GREEN}使用 venv Python: $PYTHON_BIN${NC}"
+
+    echo -e "${BLUE}在 venv 中安装依赖...${NC}"
+    "$PYTHON_BIN" -m pip install --upgrade pip --quiet 2>/dev/null || true
+    if [ -f "requirements.txt" ]; then
+        "$PYTHON_BIN" -m pip install -r requirements.txt --quiet
+    fi
+    "$PYTHON_BIN" -m pip install pyinstaller --quiet
     
     # 使用 PyInstaller 打包
     echo -e "${BLUE}正在打包...${NC}"
@@ -228,22 +247,46 @@ build_mac_arm64() {
         echo -e "  输出: $DIST_DIR/mac_arm64/$APP_NAME.app"
         
         # 创建 DMG
-        if [ -f "create_dmg.sh" ]; then
-            echo -e "${BLUE}创建 DMG 安装包...${NC}"
-            APP_PATH="$DIST_DIR/mac_arm64/$APP_NAME.app"
-            DMG_NAME=$(get_output_name "mac-arm64" "dmg")
-            
-            # 临时修改 create_dmg.sh 的输出路径
-            TEMP_DMG_SCRIPT=$(mktemp)
-            sed "s|dist/${APP_NAME}.app|$APP_PATH|g; s|dist/${APP_NAME}_V${VERSION}.dmg|$DIST_DIR/mac_arm64/$DMG_NAME|g" create_dmg.sh > "$TEMP_DMG_SCRIPT"
-            chmod +x "$TEMP_DMG_SCRIPT"
-            "$TEMP_DMG_SCRIPT"
-            rm "$TEMP_DMG_SCRIPT"
-            
-            if [ -f "$DIST_DIR/mac_arm64/$DMG_NAME" ]; then
-                echo -e "${GREEN}✓ DMG 创建成功: $DIST_DIR/mac_arm64/$DMG_NAME${NC}"
-            fi
+        echo -e "${BLUE}创建 DMG 安装包...${NC}"
+        APP_PATH="$DIST_DIR/mac_arm64/$APP_NAME.app"
+        DMG_NAME=$(get_output_name "mac-arm64" "dmg")
+        DMG_OUT="$DIST_DIR/mac_arm64/$DMG_NAME"
+        DMG_TEMP_DIR="$BUILD_SUBDIR/dmg_temp_dir"
+        
+        rm -rf "$DMG_TEMP_DIR" "$DMG_OUT" 2>/dev/null || true
+        mkdir -p "$DMG_TEMP_DIR"
+        
+        echo -e "${BLUE}复制 App Bundle...${NC}"
+        cp -R "$APP_PATH" "$DMG_TEMP_DIR/"
+        echo -e "${BLUE}创建 Applications 链接...${NC}"
+        ln -s /Applications "$DMG_TEMP_DIR/Applications" || true
+        
+        cat > "$DMG_TEMP_DIR/README.txt" << EOF
+${APP_NAME} V${VERSION}
+============================
+
+安装说明：
+1. 将"${APP_NAME}.app"拖拽到"Applications"文件夹
+2. 在应用程序中找到并打开"${APP_NAME}"
+3. 如果提示"无法打开"，请：
+   - 右键点击应用，选择"打开"
+   - 或在"系统设置" > "隐私与安全性"中允许
+
+注意：
+- 修改hosts文件时会提示输入密码
+- 应用启动不需要管理员权限
+EOF
+        
+        echo -e "${BLUE}创建 DMG 文件...${NC}"
+        if hdiutil create -volname "$APP_NAME" \
+            -srcfolder "$DMG_TEMP_DIR" \
+            -ov -format UDZO \
+            "$DMG_OUT" > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ DMG 创建成功: $DMG_OUT${NC}"
+        else
+            echo -e "${YELLOW}⚠ DMG 创建失败（已跳过，不影响 ZIP/APP 产物）${NC}"
         fi
+        rm -rf "$DMG_TEMP_DIR" 2>/dev/null || true
         
         # 创建 ZIP 压缩包（可选）
         echo -e "${BLUE}创建 ZIP 压缩包...${NC}"
@@ -376,21 +419,46 @@ build_mac_intel() {
         echo -e "  输出: $DIST_DIR/mac_intel/$APP_NAME.app"
         
         # 创建 DMG
-        if [ -f "create_dmg.sh" ]; then
-            echo -e "${BLUE}创建 DMG 安装包...${NC}"
-            APP_PATH="$DIST_DIR/mac_intel/$APP_NAME.app"
-            DMG_NAME=$(get_output_name "mac-intel" "dmg")
-            
-            TEMP_DMG_SCRIPT=$(mktemp)
-            sed "s|dist/${APP_NAME}.app|$APP_PATH|g; s|dist/${APP_NAME}_V${VERSION}.dmg|$DIST_DIR/mac_intel/$DMG_NAME|g" create_dmg.sh > "$TEMP_DMG_SCRIPT"
-            chmod +x "$TEMP_DMG_SCRIPT"
-            "$TEMP_DMG_SCRIPT"
-            rm "$TEMP_DMG_SCRIPT"
-            
-            if [ -f "$DIST_DIR/mac_intel/$DMG_NAME" ]; then
-                echo -e "${GREEN}✓ DMG 创建成功: $DIST_DIR/mac_intel/$DMG_NAME${NC}"
-            fi
+        echo -e "${BLUE}创建 DMG 安装包...${NC}"
+        APP_PATH="$DIST_DIR/mac_intel/$APP_NAME.app"
+        DMG_NAME=$(get_output_name "mac-intel" "dmg")
+        DMG_OUT="$DIST_DIR/mac_intel/$DMG_NAME"
+        DMG_TEMP_DIR="$BUILD_SUBDIR/dmg_temp_dir"
+        
+        rm -rf "$DMG_TEMP_DIR" "$DMG_OUT" 2>/dev/null || true
+        mkdir -p "$DMG_TEMP_DIR"
+        
+        echo -e "${BLUE}复制 App Bundle...${NC}"
+        cp -R "$APP_PATH" "$DMG_TEMP_DIR/"
+        echo -e "${BLUE}创建 Applications 链接...${NC}"
+        ln -s /Applications "$DMG_TEMP_DIR/Applications" || true
+        
+        cat > "$DMG_TEMP_DIR/README.txt" << EOF
+${APP_NAME} V${VERSION}
+============================
+
+安装说明：
+1. 将"${APP_NAME}.app"拖拽到"Applications"文件夹
+2. 在应用程序中找到并打开"${APP_NAME}"
+3. 如果提示"无法打开"，请：
+   - 右键点击应用，选择"打开"
+   - 或在"系统设置" > "隐私与安全性"中允许
+
+注意：
+- 修改hosts文件时会提示输入密码
+- 应用启动不需要管理员权限
+EOF
+        
+        echo -e "${BLUE}创建 DMG 文件...${NC}"
+        if hdiutil create -volname "$APP_NAME" \
+            -srcfolder "$DMG_TEMP_DIR" \
+            -ov -format UDZO \
+            "$DMG_OUT" > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ DMG 创建成功: $DMG_OUT${NC}"
+        else
+            echo -e "${YELLOW}⚠ DMG 创建失败（已跳过，不影响 ZIP/APP 产物）${NC}"
         fi
+        rm -rf "$DMG_TEMP_DIR" 2>/dev/null || true
         
         # 创建 ZIP 压缩包（可选）
         echo -e "${BLUE}创建 ZIP 压缩包...${NC}"

@@ -158,6 +158,19 @@ def main():
     app.setApplicationName("千图网问题解决工具")
     app.setOrganizationName("千图网")
     
+    # 设置应用图标（窗口/任务栏/Dock）
+    try:
+        if getattr(sys, 'frozen', False):
+            base_dir = sys._MEIPASS
+        else:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        icon_path = os.path.join(base_dir, 'resources', 'app_icon.png')
+        if os.path.exists(icon_path):
+            app.setWindowIcon(QIcon(icon_path))
+    except Exception:
+        # 图标设置失败不影响启动
+        pass
+    
     # 设置样式
     app.setStyle('Fusion')
     

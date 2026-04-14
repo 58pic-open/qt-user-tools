@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>千图网问题解决工具｜非技术同事使用教程</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: rgba(255, 255, 255, 0.08);
+        --card2: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.72);
+        --muted2: rgba(255, 255, 255, 0.58);
+        --ok: #34c759;
+        --warn: #ff9f0a;
+        --bad: #ff453a;
+        --brand: #4ea1ff;
+        --shadow: 0 18px 55px rgba(0, 0, 0, 0.45);
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        background: radial-gradient(1200px 600px at 20% 0%, rgba(78, 161, 255, 0.18), transparent 55%),
+          radial-gradient(900px 500px at 85% 15%, rgba(52, 199, 89, 0.14), transparent 55%),
+          radial-gradient(1000px 600px at 40% 100%, rgba(255, 159, 10, 0.12), transparent 60%), var(--bg);
+        color: var(--text);
+        line-height: 1.55;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.35);
+      }
+      a:hover {
+        border-bottom-color: rgba(255, 255, 255, 0.75);
+      }
+
+      .container {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 28px 18px 80px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 14px;
+        align-items: start;
+        margin-bottom: 18px;
+      }
+
+      .hero {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.06));
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px 18px 16px;
+        box-shadow: var(--shadow);
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        letter-spacing: 0.2px;
+      }
+
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+      }
+
+      .quick {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: var(--shadow);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .chip b {
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 14px;
+        margin-top: 16px;
+      }
+
+      .card {
+        grid-column: span 6;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 14px;
+        letter-spacing: 0.2px;
+      }
+
+      .card p {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .steps {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--text);
+        font-size: 13px;
+      }
+      .steps li {
+        margin: 6px 0;
+      }
+      .steps b {
+        font-weight: 650;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--muted);
+      }
+      .tag.ok {
+        color: rgba(52, 199, 89, 0.95);
+        border-color: rgba(52, 199, 89, 0.28);
+        background: rgba(52, 199, 89, 0.12);
+      }
+      .tag.warn {
+        color: rgba(255, 159, 10, 0.95);
+        border-color: rgba(255, 159, 10, 0.28);
+        background: rgba(255, 159, 10, 0.12);
+      }
+      .tag.bad {
+        color: rgba(255, 69, 58, 0.95);
+        border-color: rgba(255, 69, 58, 0.28);
+        background: rgba(255, 69, 58, 0.12);
+      }
+
+      .mono {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+        padding: 10px 12px;
+        overflow: auto;
+      }
+
+      .faq {
+        grid-column: span 12;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      details {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 14px;
+        padding: 10px 12px;
+        margin: 10px 0;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 650;
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 13px;
+      }
+      details > div {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .toc {
+        display: grid;
+        gap: 10px;
+      }
+      .toc h3 {
+        margin: 0;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.92);
+      }
+      .toc a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--muted);
+      }
+      .toc a:hover {
+        color: var(--text);
+        border-color: rgba(78, 161, 255, 0.45);
+        background: rgba(78, 161, 255, 0.12);
+      }
+
+      .search {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 10px;
+      }
+      input[type="search"] {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        outline: none;
+      }
+      input[type="search"]::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .hint {
+        color: var(--muted2);
+        font-size: 12px;
+        margin-top: 8px;
+      }
+
+      .mockwin {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.22);
+      }
+      .mockbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 12px;
+      }
+      .dots {
+        display: inline-flex;
+        gap: 6px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.25);
+      }
+      .mockcontent {
+        padding: 14px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .mocksection {
+        border: 1px dashed rgba(255, 255, 255, 0.22);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .mocksection h4 {
+        margin: 0 0 6px;
+        font-size: 12px;
+        letter-spacing: 0.2px;
+        color: rgba(255, 255, 255, 0.92);
+      }
+      .mocksection p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .imggrid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .shot {
+        grid-column: span 6;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.18);
+      }
+      .shot img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .shot figcaption {
+        padding: 8px 10px;
+        font-size: 12px;
+        color: var(--muted);
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      footer {
+        margin-top: 18px;
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 12px;
+      }
+
+      @media (max-width: 920px) {
+        header {
+          grid-template-columns: 1fr;
+        }
+        .card {
+          grid-column: span 12;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="hero" id="top">
+          <h1>千图网问题解决工具｜非技术同事使用教程</h1>
+          <p class="sub">
+            目标：用最少步骤把“页面打不开 / 图片不显示 / 样式乱 / 下载失败”等常见问题快速恢复。你只需要做两件事：<b>选对问题</b>，然后<b>一键修复</b>。
+          </p>
+          <div class="chips" aria-label="quick facts">
+            <span class="chip"><b>修复原理</b>：自动修改系统 <span class="mono" style="padding: 2px 6px; border-radius: 8px">hosts</span> + 清理 DNS 缓存</span>
+            <span class="chip"><b>需要权限</b>：修复类操作需要管理员权限</span>
+            <span class="chip"><b>修复后</b>：刷新页面，必要时重启浏览器</span>
+          </div>
+        </div>
+
+        <div class="quick" aria-label="table of contents">
+          <div class="toc">
+            <h3>目录</h3>
+            <a href="#before">开始前先看（1分钟）</a>
+            <a href="#ui">软件界面怎么点（可视化引导）</a>
+            <a href="#manual">不点“一键修复”，手动怎么做</a>
+            <a href="#choose">如何判断选哪个问题</a>
+            <a href="#problems">常见问题：判断 + 处理方案</a>
+            <a href="#tools">工具箱：什么时候用</a>
+            <a href="#after">修复后如何验证</a>
+            <a href="#faq">失败/不生效怎么办</a>
+          </div>
+          <div class="search" role="search">
+            <input id="q" type="search" placeholder="搜索关键词：预览图 / 样式 / 下载 / Safari / 主站打不开 ..." />
+          </div>
+          <div class="hint" id="searchHint">提示：输入关键词后，会高亮匹配的卡片标题。</div>
+        </div>
+      </header>
+
+      <section class="grid" id="before" data-search="开始前 权限 管理员 sudo 以管理员身份运行">
+        <div class="card" style="grid-column: span 12">
+          <h2>开始前先看（1分钟）</h2>
+          <ol class="steps">
+            <li>
+              <b>先确认你遇到的是“访问/显示问题”</b>（比如页面打不开、图片不出、样式乱、下载失败）。如果是账号/权限/套餐问题，这个工具不解决。
+            </li>
+            <li>
+              <b>修复类功能需要管理员权限</b>：
+              <ul class="steps" style="margin-top: 6px">
+                <li><span class="tag warn">Windows</span> 右键程序 → <b>以管理员身份运行</b></li>
+                <li><span class="tag warn">macOS</span> 若提示权限不足，需要用管理员方式运行（或联系技术同事协助）</li>
+              </ul>
+            </li>
+            <li><b>修复后一定要刷新</b>：优先“刷新网页”，不行就“完全退出浏览器再打开”，再不行“重启电脑”。</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="grid" id="ui" data-search="界面 导览 可视化 怎么点 主界面 常见问题快速修复 工具箱 状态栏 一键修复 立即修复 预览修改 我已了解">
+        <div class="card">
+          <h2>软件主界面长什么样？（三块区域）</h2>
+          <p>你只要记住：<b>上面选问题卡片</b>，<b>下面用工具箱</b>，最底部/右下角看状态。</p>
+          <div class="mockwin" aria-label="Main window schematic">
+            <div class="mockbar">
+              <span class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+              <span>千图网问题解决工具（主界面示意）</span>
+            </div>
+            <div class="mockcontent">
+              <div class="mocksection">
+                <h4>📋 常见问题快速修复（卡片区）</h4>
+                <p>看到与你现象最像的卡片 → 点击 <b>一键修复</b>。</p>
+              </div>
+              <div class="mocksection">
+                <h4>🔧 工具箱（辅助工具区）</h4>
+                <p>用来“检查是否修复成功 / 清缓存 / 清 DNS / 检查浏览器版本 / 诊断下载”。</p>
+              </div>
+              <div class="mocksection">
+                <h4>状态栏（底部信息）</h4>
+                <p>会显示：系统、权限是否满足、已绑定域名数量。若提示“需要管理员权限”，请按提示用管理员方式运行。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>点进“问题修复”弹窗后，怎么操作？</h2>
+          <p>弹窗里你只需要关注这几个按钮/区域（名字跟软件里一致）。</p>
+          <ol class="steps">
+            <li><b>问题描述 / 解决方案</b>：帮助你确认“选对问题了”。</li>
+            <li><b>立即修复</b>：真正开始修复（会修改 hosts + 清 DNS）。</li>
+            <li><b>预览修改</b>：当前版本会提示“后续实现”，可以先忽略。</li>
+            <li><b>修复进度条</b>：显示正在做什么（获取 IP、备份 hosts、修改 hosts、清 DNS）。</li>
+            <li><b>Safari 特例</b>：Safari 问题弹窗不会“自动修复”，而是给你一步步的清缓存引导，按钮是 <b>我已了解</b>。</li>
+          </ol>
+        </div>
+
+        <div class="card" style="grid-column: span 12">
+          <h2>“问题示例图”怎么用？（对照你屏幕上的现象）</h2>
+          <p>软件弹窗里会显示示例截图。你也可以在这里先看一眼，快速确认自己遇到的是哪一类问题。</p>
+          <div class="imggrid" aria-label="Example screenshots">
+            <figure class="shot" data-search="预览图 示例 preview">
+              <img src="resources/images/preview_1.png" alt="预览图问题示例 1" loading="lazy" />
+              <figcaption>预览图问题示例：卡片图片加载失败/很慢</figcaption>
+            </figure>
+            <figure class="shot" data-search="预览图 示例 preview">
+              <img src="resources/images/preview_2.png" alt="预览图问题示例 2" loading="lazy" />
+              <figcaption>预览图问题示例：预览图空白或长时间转圈</figcaption>
+            </figure>
+            <figure class="shot" data-search="样式 下载页面 样式乱 js">
+              <img src="resources/images/js.png" alt="样式问题示例" loading="lazy" />
+              <figcaption>样式问题示例：页面布局/样式异常</figcaption>
+            </figure>
+            <figure class="shot" data-search="主站样式 图标缺失 icon">
+              <img src="resources/images/icon.png" alt="主站样式问题示例" loading="lazy" />
+              <figcaption>主站样式示例：图标/样式资源缺失</figcaption>
+            </figure>
+            <figure class="shot" data-search="下载页面 无法访问 download">
+              <img src="resources/images/download_1.png" alt="下载问题示例 1" loading="lazy" />
+              <figcaption>下载问题示例：下载页无法访问</figcaption>
+            </figure>
+            <figure class="shot" data-search="下载页面 无法访问 download">
+              <img src="resources/images/download_2.png" alt="下载问题示例 2" loading="lazy" />
+              <figcaption>下载问题示例：下载入口报错/无法打开</figcaption>
+            </figure>
+            <figure class="shot" data-search="云设计 无法访问 cloud">
+              <img src="resources/images/cloud.png" alt="云设计问题示例" loading="lazy" />
+              <figcaption>云设计问题示例：云设计首页无法访问</figcaption>
+            </figure>
+            <figure class="shot" data-search="卡片加载异常 解绑 unbind">
+              <img src="resources/images/unbind_preview.jpeg" alt="卡片加载异常示例" loading="lazy" />
+              <figcaption>卡片加载异常示例：有标签文字但无内容（通常需要解绑）</figcaption>
+            </figure>
+            <figure class="shot" data-search="下载失败 网络错误 download_fail">
+              <img src="resources/images/download_fail_1.png" alt="下载失败示例" loading="lazy" />
+              <figcaption>下载失败示例：网络错误/下载中断</figcaption>
+            </figure>
+            <figure class="shot" data-search="Safari 清除缓存 safari_cache">
+              <img src="resources/images/safari_cache_1.png" alt="Safari 清缓存示例 1" loading="lazy" />
+              <figcaption>Safari 引导示例：进入隐私/网站数据</figcaption>
+            </figure>
+            <figure class="shot" data-search="Safari 清除缓存 safari_cache">
+              <img src="resources/images/safari_cache_2.png" alt="Safari 清缓存示例 2" loading="lazy" />
+              <figcaption>Safari 引导示例：搜索 58pic.com 并移除数据</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid" id="manual" data-search="手动 修复 不用一键修复 自己操作 hosts 文件路径 修改权限 管理员 以管理员身份运行 sudo /etc/hosts flushdns">
+        <div class="card" style="grid-column: span 12">
+          <h2>不点“一键修复”，你也可以手动处理（适合：没有管理员权限/软件打不开/需要按技术同事指示操作）</h2>
+          <p>
+            一键修复的本质是：<b>改 hosts</b>（让电脑访问指定域名时走指定 IP）+ <b>清 DNS 缓存</b>（让修改立刻生效）。
+          </p>
+          <ol class="steps">
+            <li><b>先确定你要处理的是哪一类问题</b>（下面有“域名对照表”）。</li>
+            <li><b>再按你的系统（Windows/macOS）去改 hosts</b>。</li>
+            <li><b>最后清 DNS + 刷新浏览器</b>。</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h2>域名对照表（你要往 hosts 里加什么）</h2>
+          <p>你只需要复制对应问题的“域名行”。其中有些问题的 IP 是固定的；有些 IP 会变化（可按下面步骤自己获取，无需技术同事）。</p>
+          <div class="mono" aria-label="Domain mapping cheatsheet">
+【IP 会变化时，先这样拿到“最优IP”（无需技术同事）】
+方法A（推荐）：打开 17ce.com → 选择 PING → 输入域名 → 取“最快/延迟最低”的节点 IPv4
+方法B（你电脑有 Python 时）：在项目目录执行：python hosts/get_domain_ip.py <域名>
+
+【预览图问题】（IP 会变化）
+<上一步获取的IP>    preview.qiantucdn.com
+
+【样式问题】（IP 会变化）
+<上一步获取的IP>    js.qiantucdn.com
+
+【主站样式】（IP 会变化）
+<上一步获取的IP>    icon.qiantucdn.com
+
+【下载页面无法访问】（固定 IP）
+47.104.5.133             dl.58pic.com
+
+【云设计首页无法访问】（固定 IP）
+118.190.104.146          y.58pic.com
+
+【主站打不开】（固定 IP）
+47.104.159.75            www.58pic.com
+47.104.159.75            qiye.58pic.com
+
+【下载失败/中断】（IP 可能变化，且可能是多个域名）
+<对应域名获取的IP>    proxy-rar.58pic.com
+<对应域名获取的IP>    proxy-vip.58pic.com
+<对应域名获取的IP>    proxy-vd.58pic.com
+
+【卡片有标签但无内容】（这是“解绑”，不是绑定）
+从 hosts 里删除含有 preview.qiantucdn.com 的那一行
+          </div>
+          <p class="hint">
+            说明：预览图/样式/下载代理这些域名的最优 IP 可能会变，所以教程里不写死 IP，避免误导。你可以让技术同事把“IP + 域名”整行发你，直接复制进 hosts。
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Windows：如何找到并修改 hosts（图文版）</h2>
+          <ol class="steps">
+            <li>
+              <b>打开 hosts 文件路径</b>：
+              <div class="mono">C:\Windows\System32\drivers\etc\hosts</div>
+            </li>
+            <li>
+              <b>用管理员权限打开记事本</b>：
+              <ul class="steps" style="margin-top: 6px">
+                <li>开始菜单搜索：<b>记事本</b> → 右键 → <b>以管理员身份运行</b></li>
+              </ul>
+            </li>
+            <li>
+              <b>在记事本里打开 hosts</b>：
+              <ul class="steps" style="margin-top: 6px">
+                <li>文件 → 打开 → 粘贴路径</li>
+                <li>右下角文件类型从“文本文档 (*.txt)”切换到 <b>所有文件 (*.*)</b></li>
+                <li>选择 <span class="mono" style="padding: 2px 6px">hosts</span> 打开</li>
+              </ul>
+            </li>
+            <li><b>先备份</b>：把文件另存一份，比如 <span class="mono" style="padding: 2px 6px">hosts.backup</span>（同目录或桌面都行）。</li>
+            <li><b>在文件末尾追加</b>：把“域名对照表”里的行复制粘贴进去（每行一个域名）。</li>
+            <li><b>保存</b>：Ctrl+S。</li>
+            <li>
+              <b>清 DNS 缓存</b>（让修改立刻生效）：
+              <div class="mono">以管理员身份打开 CMD，然后执行：<br />ipconfig /flushdns</div>
+            </li>
+            <li><b>验证</b>：刷新网页（Ctrl+F5），不行就完全退出浏览器重开。</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h2>macOS：如何找到并修改 hosts（命令版）</h2>
+          <p>macOS 的 hosts 路径固定在：</p>
+          <div class="mono">/etc/hosts</div>
+          <ol class="steps" style="margin-top: 10px">
+            <li>
+              <b>备份 hosts</b>（推荐先做）：
+              <div class="mono">sudo cp /etc/hosts /etc/hosts.backup</div>
+            </li>
+            <li>
+              <b>用管理员权限编辑</b>（选择一种你熟悉的编辑器）：
+              <div class="mono">sudo nano /etc/hosts</div>
+              <div class="hint">如果你不熟悉 nano：把要添加的行复制给技术同事，让他们远程协助更稳。</div>
+            </li>
+            <li><b>在文件末尾追加</b>：把“域名对照表”里的行粘贴进去（每行一个域名）。</li>
+            <li>
+              <b>保存并退出</b>（nano）：
+              <div class="mono">按 Ctrl+O 保存 → 回车确认 → Ctrl+X 退出</div>
+            </li>
+            <li>
+              <b>清 DNS 缓存</b>：
+              <div class="mono">sudo dscacheutil -flushcache<br />sudo killall -HUP mDNSResponder</div>
+            </li>
+            <li><b>验证</b>：刷新网页（⌘+R），不行就完全退出浏览器重开。</li>
+          </ol>
+        </div>
+
+        <div class="card" style="grid-column: span 12">
+          <h2>如果你卡在“没有权限”，该怎么做？（给非技术同事的处理方式）</h2>
+          <ol class="steps">
+            <li><b>Windows</b>：请找 IT/管理员账号同事帮你用“以管理员身份运行”打开记事本再改。</li>
+            <li><b>macOS</b>：需要输入管理员密码才能改 <span class="mono" style="padding: 2px 6px">/etc/hosts</span>；如果你没有密码，请把“域名对照表里你要加的那几行”发给有权限的同事代操作。</li>
+            <li><b>替代方案</b>：如果你能打开软件但没权限修复，可以先用工具箱做“检查 Hosts 配置/收集系统信息”，把信息发技术同事。</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="grid" id="choose" data-search="如何判断 选哪个 问题卡片 现象">
+        <div class="card">
+          <h2>最简单判断法（优先用）</h2>
+          <p>打开工具主界面，找到最接近你“现象”的卡片，然后点 <b>一键修复</b>。</p>
+          <ol class="steps">
+            <li>只要<b>预览图不显示/加载慢</b> → 选「预览图问题」</li>
+            <li>只要<b>页面布局乱 / CSS 像没加载</b> → 选「样式问题」或「主站样式」</li>
+            <li>只要<b>下载页面提示无法访问</b> → 选「下载问题」</li>
+            <li>只要<b>云设计首页无法访问</b> → 选「云设计问题」</li>
+            <li>只要<b>卡片有文字标签但没有内容图</b> → 选「卡片加载异常」</li>
+            <li>只要<b>主站/企业版直接打不开</b> → 选「主站打不开」</li>
+            <li>只要<b>下载到一半断/网络错误</b> → 选「下载失败」</li>
+            <li>只要<b>macOS 用 Safari 打不开/异常</b> → 选「Safari无法打开」</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h2>不知道选哪个？按这条“排除顺序”来</h2>
+          <p>适合你只知道“就是不对劲”，但说不清具体哪种问题。</p>
+          <ol class="steps">
+            <li><b>先看是不是主站打不开</b>：如果 `www.58pic.com` / `qiye.58pic.com` 进不去 → 直接选「主站打不开」</li>
+            <li><b>再看是不是下载相关</b>：下载页打不开 →「下载问题」；下载中断/网络错误 →「下载失败」</li>
+            <li><b>再看是图片/样式</b>：预览图问题 →「预览图问题」；样式乱/图标缺失 →「样式问题/主站样式」</li>
+            <li><b>macOS Safari 特例</b>：Safari 打不开或显示怪 →「Safari无法打开」按步骤清缓存</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="grid" id="problems">
+        <div class="card" id="p-preview" data-search="预览图 卡片 预览图无法显示 加载慢 preview.qiantucdn.com">
+          <h2>🖼️ 预览图问题 <span class="tag ok">一键修复</span></h2>
+          <p><b>现象</b>：主站卡片预览图不显示、加载很慢。</p>
+          <ol class="steps">
+            <li><b>判断</b>：页面能打开，但卡片图像加载失败或极慢。</li>
+            <li><b>处理方法</b>：点「预览图问题」→「立即修复」。</li>
+            <li><b>修复原理</b>：绑定 <span class="mono">preview.qiantucdn.com</span> 到更合适的 IP + 清理 DNS。</li>
+          </ol>
+        </div>
+
+        <div class="card" id="p-js" data-search="样式乱 下载页面样式乱 css js.qiantucdn.com">
+          <h2>🎨 样式问题（页面样式异常） <span class="tag ok">一键修复</span></h2>
+          <p><b>现象</b>：下载页样式乱、布局错位、像“没加载样式”。</p>
+          <ol class="steps">
+            <li><b>判断</b>：文字能看到，但排版/按钮样式明显不对。</li>
+            <li><b>处理方法</b>：点「样式问题」→「立即修复」。</li>
+            <li><b>修复原理</b>：绑定 <span class="mono">js.qiantucdn.com</span> + 清理 DNS。</li>
+          </ol>
+        </div>
+
+        <div class="card" id="p-icon" data-search="主站样式丢了 图标缺失 icon.qiantucdn.com">
+          <h2>🎨 主站样式（样式丢失） <span class="tag ok">一键修复</span></h2>
+          <p><b>现象</b>：主站样式/图标资源加载不出，页面看起来“裸奔”。</p>
+          <ol class="steps">
+            <li><b>判断</b>：主站能打开，但图标/样式缺失。</li>
+            <li><b>处理方法</b>：点「主站样式」→「立即修复」。</li>
+            <li><b>修复原理</b>：绑定 <span class="mono">icon.qiantucdn.com</span> + 清理 DNS。</li>
+          </ol>
+        </div>
+
+        <div class="card" id="p-download" data-search="下载页面 无法访问网站 dl.58pic.com">
+          <h2>⬇️ 下载问题（无法访问） <span class="tag ok">一键修复</span></h2>
+          <p><b>现象</b>：点击下载素材后，下载页提示“无法访问网站”。</p>
+          <ol class="steps">
+            <li><b>判断</b>：不是下载中断，而是“下载页面”本身打不开。</li>
+            <li><b>处理方法</b>：点「下载问题」→「立即修复」。</li>
+            <li><b>修复原理</b>：绑定 <span class="mono">dl.58pic.com</span> 到固定 IP（工具内置）+ 清理 DNS。</li>
+          </ol>
+        </div>
+
+        <div class="card" id="p-cloud" data-search="云设计 首页 无法访问 y.58pic.com">
+          <h2>☁️ 云设计问题（首页无法访问） <span class="tag ok">一键修复</span></h2>
+          <p><b>现象</b>：云设计首页打不开，提示无法访问。</p>
+          <ol class="steps">
+            <li><b>判断</b>：只在云设计业务入口出问题。</li>
+            <li><b>处理方法</b>：点「云设计问题」→「立即修复」。</li>
+            <li><b>修复原理</b>：绑定 <span class="mono">y.58pic.com</span> 到固定 IP（工具内置）+ 清理 DNS。</li>
+          </ol>
+        </div>
+
+        <div class="card" id="p-unbind" data-search="卡片加载异常 有标签但无内容 解绑 preview.qiantucdn.com">
+          <h2>📦 卡片加载异常（有标签但无内容） <span class="tag ok">一键修复</span></h2>
+          <p><b>现象</b>：首页卡片区域只显示标签文字，但卡片内容/图片不出来。</p>
+          <ol class="steps">
+            <li><b>判断</b>：这种情况通常是之前绑定的规则反而导致异常。</li>
+            <li><b>处理方法</b>：点「卡片加载异常」→「立即修复」。</li>
+            <li><b>修复原理</b>：解除（解绑）<span class="mono">preview.qiantucdn.com</span> + 清理 DNS。</li>
+          </ol>
+        </div>
+
+        <div class="card" id="p-main" data-search="主站打不开 企业版打不开 www.58pic.com qiye.58pic.com">
+          <h2>🚨 主站打不开 <span class="tag bad">关键问题</span></h2>
+          <p><b>现象</b>：`www.58pic.com` 或 `qiye.58pic.com` 直接打不开，浏览器提示无法访问。</p>
+          <ol class="steps">
+            <li><b>判断</b>：不是“图片/样式缺失”，而是整站进不去。</li>
+            <li><b>处理方法</b>：点「主站打不开」→「立即修复」。</li>
+            <li><b>修复原理</b>：绑定主站域名到可用 IP + 清理 DNS。</li>
+          </ol>
+        </div>
+
+        <div class="card" id="p-download-fail" data-search="下载失败 网络错误 下载中断 proxy-rar proxy-vip proxy-vd">
+          <h2>⚠️ 下载失败（网络错误/中断） <span class="tag warn">常见</span></h2>
+          <p><b>现象</b>：下载开始了，但中途断开 / 提示网络错误。</p>
+          <ol class="steps">
+            <li><b>判断</b>：下载页能打开，但下载过程不稳定。</li>
+            <li><b>处理方法</b>：点「下载失败」→「立即修复」。</li>
+            <li><b>修复原理</b>：绑定下载代理域名（如 <span class="mono">proxy-rar.58pic.com</span> 等）+ 清理 DNS。</li>
+          </ol>
+        </div>
+
+        <div class="card" id="p-safari" data-search="Safari macOS 无法打开 清除缓存 Cookie 管理网站数据">
+          <h2>🧭 Safari无法打开（macOS） <span class="tag warn">按教程操作</span></h2>
+          <p><b>现象</b>：macOS 用 Safari 打不开页面或显示异常。</p>
+          <ol class="steps">
+            <li><b>判断</b>：换 Chrome 正常，但 Safari 不正常。</li>
+            <li><b>处理方法</b>：点「Safari无法打开」，按弹窗步骤清除 58pic.com 网站数据（缓存/Cookie），然后重启 Safari。</li>
+            <li><b>注意</b>：清除后可能需要重新登录。</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="grid" id="tools" data-search="工具箱 检查hosts 清除缓存 清除DNS 检查浏览器版本 诊断下载问题 一键获取系统信息">
+        <div class="card" style="grid-column: span 12">
+          <h2>工具箱：什么时候用</h2>
+          <p>如果你“点了一键修复”但仍感觉不稳，或者需要把信息发给技术同事，优先用这里。</p>
+          <ol class="steps">
+            <li><b>检查Hosts配置</b>：想确认“是否真的修复成功/绑上了”就用它。</li>
+            <li><b>清除浏览器缓存</b>：样式、图片更新不出来时很有用。清除前请先<b>关闭浏览器</b>。</li>
+            <li><b>清除DNS缓存</b>：修复后不生效、或换网络后仍指向旧地址时使用。</li>
+            <li><b>检查浏览器版本</b>：浏览器太旧可能导致兼容问题。</li>
+            <li><b>诊断下载问题</b>：会提示常见原因（第三方下载工具、浏览器设置等）。</li>
+            <li><b>一键获取系统信息</b>：需要把环境信息发给技术支持时用（比如系统版本、权限状态等）。</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="grid" id="after" data-search="修复后 如何验证 验证步骤 刷新 重启浏览器">
+        <div class="card" style="grid-column: span 12">
+          <h2>修复后如何验证（按顺序）</h2>
+          <ol class="steps">
+            <li><b>刷新页面</b>（Windows: Ctrl+F5 / macOS: ⌘+R）。</li>
+            <li><b>完全退出浏览器再打开</b>（不是只关掉标签页）。</li>
+            <li><b>清除DNS缓存</b>（工具箱里一键清除）。</li>
+            <li><b>换浏览器</b>：Safari 异常优先换 Chrome/Edge 验证是否为 Safari 单点问题。</li>
+            <li><b>仍不行</b>：把“你选了哪个问题 + 修复结果提示 + 当前系统信息”发给技术同事。</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="grid" id="faq">
+        <div class="faq" data-search="失败 不生效 权限不足 需要管理员 取消密码 仍然失败">
+          <h2 style="margin: 0 0 10px; font-size: 14px">失败/不生效怎么办（排障）</h2>
+
+          <details>
+            <summary>提示“需要管理员权限 / 权限不足”怎么办？</summary>
+            <div>
+              <p>这是正常的：因为修复会改系统 hosts。</p>
+              <ul class="steps">
+                <li><b>Windows</b>：右键程序 → <b>以管理员身份运行</b>。</li>
+                <li><b>macOS</b>：如果你没有管理员权限，请把此问题交给有管理员权限的同事或技术支持。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>点了“一键修复”，弹窗显示成功，但页面还是不对？</summary>
+            <div>
+              <ul class="steps">
+                <li>先用工具箱 <b>清除DNS缓存</b>。</li>
+                <li>再 <b>清除浏览器缓存</b>（清除前关闭浏览器）。</li>
+                <li>再完全退出浏览器重开。</li>
+                <li>还不行就重启电脑（让 DNS/网络栈彻底刷新）。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>“卡片有标签但没内容”修复后更糟了？</summary>
+            <div>
+              <p>这类问题通常是“绑定反而造成异常”，所以修复动作是<b>解绑</b>。</p>
+              <ul class="steps">
+                <li>先点「卡片加载异常」执行修复。</li>
+                <li>修复后按“修复后验证”的顺序刷新/清 DNS。</li>
+                <li>如果仍异常，尝试「预览图问题」或「样式问题」作为补充修复。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>下载失败时，除了“一键修复”，我还要检查什么？</summary>
+            <div>
+              <ul class="steps">
+                <li>尽量使用<b>浏览器自带下载</b>，不要用第三方下载器（如迅雷）。</li>
+                <li>检查浏览器是否开启了某些“加速下载/云加速”类功能（可能影响稳定性）。</li>
+                <li>换网络（手机热点）快速排除公司网络限制。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>我需要把哪些信息发给技术同事？</summary>
+            <div>
+              <p>建议复制以下内容发过去（越短越好，但要关键）：</p>
+              <div class="mono">
+                1) 你遇到的现象（一句话）<br />
+                2) 你点了哪个问题卡片（例如：预览图问题 / 下载问题）<br />
+                3) 工具弹窗结果（成功/失败 + 报错文字）<br />
+                4) 你做过的验证动作（刷新/清DNS/清缓存/换浏览器）<br />
+                5) 你使用的系统和浏览器（Windows/macOS + Chrome/Safari）<br />
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <footer>
+        <div>文件：<span class="mono" style="padding: 2px 8px">使用教程_非技术人员.html</span>（双击即可打开预览）</div>
+        <div style="margin-top: 6px">
+          如果你是维护者：此教程对应 GUI 中的常见问题卡片（预览图/样式/主站样式/下载/云设计/解绑预览/主站打不开/下载失败/Safari缓存）。
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        const q = document.getElementById("q");
+        const cards = Array.from(document.querySelectorAll("[data-search]"));
+        const original = new Map();
+        for (const el of cards) original.set(el, el.style.outline);
+
+        function clearHighlights() {
+          for (const el of cards) {
+            el.style.outline = "";
+            el.style.boxShadow = "";
+          }
+        }
+
+        function highlight(term) {
+          const t = term.trim().toLowerCase();
+          clearHighlights();
+          if (!t) return;
+          let any = false;
+          for (const el of cards) {
+            const hay = (el.getAttribute("data-search") || "").toLowerCase();
+            if (hay.includes(t)) {
+              el.style.outline = "2px solid rgba(78,161,255,0.75)";
+              el.style.boxShadow = "0 0 0 6px rgba(78,161,255,0.12)";
+              any = true;
+            }
+          }
+          const hint = document.getElementById("searchHint");
+          if (hint) hint.textContent = any ? "已高亮匹配内容。" : "未找到匹配内容，换个关键词试试。";
+        }
+
+        q.addEventListener("input", () => highlight(q.value));
+      })();
+    </script>
+  </body>
+</html>
