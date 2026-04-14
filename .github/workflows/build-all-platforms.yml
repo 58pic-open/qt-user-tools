@@ -93,9 +93,9 @@ jobs:
 
   build-macos-intel:
     name: Build macOS Intel
-    # Intel 构建必须跑在 x86_64 runner（否则 x64 Python 依赖会与 arm64 Homebrew 架构冲突）
-    # macos-13 为 x86_64，最稳定
-    runs-on: macos-13
+    # Intel 构建需要 x86_64 runner。GitHub Actions 近期开启/关闭了部分旧版 macOS x64 配置，
+    # 使用 larger runner 的 x64 标签更稳定（需要组织/企业开通 larger runners）。
+    runs-on: macos-14-large
     
     steps:
       - name: Checkout code
