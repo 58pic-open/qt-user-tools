@@ -93,54 +93,29 @@ jobs:
 
   build-macos-intel:
     name: Build macOS Intel
-    runs-on: macos-14  # macOS 14 (Sonoma) - 支持 Rosetta 2
+    # 使用 macOS 15：避免 setup-python 下载到“比 runner OS 更新”的 x64 Python 导致无法启动
+    runs-on: macos-15
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Check and configure system gettext
+
+      - name: Install gettext for x64 Python
         run: |
-          # 检查系统自带的 gettext（macOS 通常自带，且是通用二进制）
-          echo "Checking for system gettext..."
-          
-          # macOS 系统通常自带 libintl，检查架构
-          if [ -f "/usr/lib/libintl.dylib" ]; then
-            echo "Found system libintl.dylib:"
-            file /usr/lib/libintl.dylib || true
-            lipo -info /usr/lib/libintl.dylib 2>/dev/null || true
-            echo "Will use system libintl.dylib"
-            echo "USE_SYSTEM_GETTEXT=true" >> $GITHUB_ENV
-            # 立即设置环境变量，让后续步骤都能使用
-            echo "DYLD_LIBRARY_PATH=/usr/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
-          else
-            echo "System libintl.dylib not found, will try without gettext"
-            echo "USE_SYSTEM_GETTEXT=false" >> $GITHUB_ENV
+          set -x
+          brew install gettext || true
+          # setup-python 的部分 x64 包会依赖 /usr/local/opt/gettext/lib/libintl.8.dylib
+          sudo mkdir -p /usr/local/opt
+          if [ -d "/opt/homebrew/opt/gettext" ] && [ ! -e "/usr/local/opt/gettext" ]; then
+            sudo ln -s /opt/homebrew/opt/gettext /usr/local/opt/gettext
           fi
-          
-          # 确保环境变量在后续步骤中可用
-          echo "Environment configured for x86_64 Python"
+          ls -la /usr/local/opt/gettext/lib || true
       
       - name: Set up Python (x86_64)
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           architecture: 'x64'  # 使用 x64 架构（Intel）
-      
-      - name: Configure environment for x86_64 Python
-        env:
-          USE_SYSTEM_GETTEXT: ${{ env.USE_SYSTEM_GETTEXT }}
-        run: |
-          # 在 Python 设置后立即设置环境变量，确保 Python 能找到系统库
-          if [ "$USE_SYSTEM_GETTEXT" = "true" ]; then
-            export DYLD_LIBRARY_PATH="/usr/lib:$DYLD_LIBRARY_PATH"
-            echo "DYLD_LIBRARY_PATH=/usr/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
-            echo "Configured to use system libintl.dylib"
-          fi
-          
-          # 验证 Python 架构
-          echo "Python architecture:"
-          python -c "import platform; print(platform.machine())" || echo "Python check failed"
       
       - name: Cache pip packages
         uses: actions/cache@v4
@@ -151,15 +126,7 @@ jobs:
             ${{ runner.os }}-intel-pip-
       
       - name: Install dependencies
-        env:
-          USE_SYSTEM_GETTEXT: ${{ env.USE_SYSTEM_GETTEXT }}
         run: |
-          # 设置库路径（使用系统自带的 gettext）
-          if [ "$USE_SYSTEM_GETTEXT" = "true" ]; then
-            export DYLD_LIBRARY_PATH="/usr/lib:$DYLD_LIBRARY_PATH"
-            echo "Using system libintl.dylib"
-          fi
-          
           # 验证 Python 架构
           echo "Python architecture:"
           python -c "import platform; print(platform.machine())"
@@ -178,16 +145,8 @@ jobs:
           pip install pyinstaller
       
       - name: Build macOS Intel
-        env:
-          USE_SYSTEM_GETTEXT: ${{ env.USE_SYSTEM_GETTEXT }}
         run: |
           chmod +x build_all_platforms.sh
-          # 设置库路径（使用系统自带的 gettext）
-          if [ "$USE_SYSTEM_GETTEXT" = "true" ]; then
-            export DYLD_LIBRARY_PATH="/usr/lib:$DYLD_LIBRARY_PATH"
-            echo "Using system libintl.dylib"
-          fi
-          
           # 显示详细输出以便调试
           set -x
           ./build_all_platforms.sh --mac-intel || {
