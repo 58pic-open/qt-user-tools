@@ -93,23 +93,13 @@ jobs:
 
   build-macos-intel:
     name: Build macOS Intel
-    # 使用 macOS 15：避免 setup-python 下载到“比 runner OS 更新”的 x64 Python 导致无法启动
-    runs-on: macos-15
+    # Intel 构建必须跑在 x86_64 runner（否则 x64 Python 依赖会与 arm64 Homebrew 架构冲突）
+    # macos-13 为 x86_64，最稳定
+    runs-on: macos-13
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Install gettext for x64 Python
-        run: |
-          set -x
-          brew install gettext || true
-          # setup-python 的部分 x64 包会依赖 /usr/local/opt/gettext/lib/libintl.8.dylib
-          sudo mkdir -p /usr/local/opt
-          if [ -d "/opt/homebrew/opt/gettext" ] && [ ! -e "/usr/local/opt/gettext" ]; then
-            sudo ln -s /opt/homebrew/opt/gettext /usr/local/opt/gettext
-          fi
-          ls -la /usr/local/opt/gettext/lib || true
       
       - name: Set up Python (x86_64)
         uses: actions/setup-python@v5
