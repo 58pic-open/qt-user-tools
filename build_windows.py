@@ -15,6 +15,19 @@ VERSION = "0.0.1"
 APP_NAME = "千图网问题解决工具"
 APP_NAME_EN = "QiantuTroubleshooter"
 
+def _force_utf8_console() -> None:
+    """
+    Windows CI/某些终端默认编码可能是 cp1252 / gbk，直接 print 中文会触发 UnicodeEncodeError。
+    这里尽量把 stdout/stderr 切到 UTF-8，避免脚本在 CI 里崩溃。
+    """
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 def get_output_name(platform, format_type):
     """生成平台特定的文件名"""
     if platform == "windows":
@@ -25,6 +38,7 @@ def get_output_name(platform, format_type):
     return None
 
 def main():
+    _force_utf8_console()
     print("=" * 50)
     print("Windows EXE 打包脚本")
     print("=" * 50)

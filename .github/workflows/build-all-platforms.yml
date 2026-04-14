@@ -186,6 +186,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Force UTF-8 console (Windows)
+        shell: pwsh
+        run: |
+          # Avoid UnicodeEncodeError when printing Chinese on Windows runners
+          chcp 65001
+          "PYTHONUTF8=1" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "PYTHONIOENCODING=utf-8" | Out-File -FilePath $env:GITHUB_ENV -Append
       
       - name: Set up Python
         uses: actions/setup-python@v5
