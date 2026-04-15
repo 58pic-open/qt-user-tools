@@ -5,9 +5,17 @@
 可点击的问题卡片，用于主界面显示
 """
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
+from gui.qt_api import (
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QPushButton,
+    pyqtSignal,
+    QFont,
+    ALIGN_CENTER,
+    FONT_WEIGHT_BOLD,
+    POINTING_HAND_CURSOR,
+)
 
 
 class ProblemCard(QWidget):
@@ -51,8 +59,8 @@ class ProblemCard(QWidget):
         # 图标和标题
         icon_text = self.ICONS.get(self.problem_type, '❓')
         title_label = QLabel(f"{icon_text} {self.title}")
-        title_label.setFont(QFont("Arial", 13, QFont.Weight.Bold))  # 增大字体
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label.setFont(QFont("Arial", 13, FONT_WEIGHT_BOLD))  # 增大字体
+        title_label.setAlignment(ALIGN_CENTER)
         title_label.setWordWrap(True)
         # 关键问题使用红色，普通问题使用深黑色（确保在白色背景上清晰可见）
         title_color = "#ff4d4f" if is_critical else "#000000"
@@ -62,7 +70,7 @@ class ProblemCard(QWidget):
         # 描述
         desc_label = QLabel(self.description)
         desc_label.setFont(QFont("Arial", 10))  # 增大字体
-        desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        desc_label.setAlignment(ALIGN_CENTER)
         desc_label.setWordWrap(True)
         # 描述文字使用深灰色（确保在白色背景上清晰可见）
         desc_color = "#333333"
@@ -71,8 +79,8 @@ class ProblemCard(QWidget):
         
         # 修复按钮
         fix_btn = QPushButton("一键修复")
-        fix_btn.setFont(QFont("Arial", 10, QFont.Weight.Bold))
-        fix_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        fix_btn.setFont(QFont("Arial", 10, FONT_WEIGHT_BOLD))
+        fix_btn.setCursor(POINTING_HAND_CURSOR)
         fix_btn.clicked.connect(lambda: self.fix_clicked.emit(self.problem_type))
         
         layout.addWidget(title_label)

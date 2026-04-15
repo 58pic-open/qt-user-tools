@@ -7,13 +7,27 @@
 
 import os
 import sys
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget,
-    QLabel, QPushButton, QTableWidget, QTableWidgetItem,
-    QTextEdit, QProgressBar, QFileDialog, QMessageBox
+from gui.qt_api import (
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QTabWidget,
+    QWidget,
+    QLabel,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QTextEdit,
+    QProgressBar,
+    QFileDialog,
+    QMessageBox,
+    QThread,
+    pyqtSignal,
+    QFont,
+    QClipboard,
+    QGuiApplication,
+    NO_EDIT_TRIGGERS,
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QFont, QClipboard, QGuiApplication
 
 # 添加路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -192,7 +206,7 @@ class InfoDialog(QDialog):
         table.setHorizontalHeaderLabels(["项目", "值"])
         table.horizontalHeader().setStretchLastSection(True)
         table.setAlternatingRowColors(True)
-        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.setEditTriggers(NO_EDIT_TRIGGERS)
         
         layout.addWidget(table)
         widget.setLayout(layout)

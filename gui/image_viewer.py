@@ -4,11 +4,19 @@
 图片查看器 - 点击图片放大查看
 """
 
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
+from gui.qt_api import (
+    QDialog,
+    QVBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QWidget,
+    QPixmap,
+    QMouseEvent,
+    ALIGN_CENTER,
+    POINTING_HAND_CURSOR,
+    LEFT_MOUSE_BUTTON,
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap, QFont, QMouseEvent
 
 
 class ImageViewerDialog(QDialog):
@@ -31,12 +39,12 @@ class ImageViewerDialog(QDialog):
         # 创建滚动区域
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        scroll_area.setAlignment(ALIGN_CENTER)
         
         # 图片标签
         img_label = QLabel()
         img_label.setPixmap(self.original_pixmap)
-        img_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        img_label.setAlignment(ALIGN_CENTER)
         img_label.setStyleSheet("background-color: #f5f5f5; padding: 10px;")
         
         scroll_area.setWidget(img_label)
@@ -71,7 +79,7 @@ class ClickableImageLabel(QLabel):
         self.original_pixmap = original_pixmap
         self.thumbnail_pixmap = thumbnail_pixmap
         self.setPixmap(thumbnail_pixmap)
-        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setAlignment(ALIGN_CENTER)
         self.setStyleSheet("""
             QLabel {
                 background-color: white;
@@ -84,11 +92,11 @@ class ClickableImageLabel(QLabel):
                 cursor: pointer;
             }
         """)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setCursor(POINTING_HAND_CURSOR)
         self.setToolTip("点击查看大图")
     
     def mousePressEvent(self, event):
         """点击事件"""
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == LEFT_MOUSE_BUTTON:
             viewer = ImageViewerDialog(self.original_pixmap, self.parent())
             viewer.exec()

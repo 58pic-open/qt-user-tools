@@ -9,6 +9,8 @@ import os
 import sys
 import shutil
 from pathlib import Path
+import subprocess
+from typing import List, Optional, Tuple
 
 # 版本信息
 VERSION = "0.0.1"
@@ -37,6 +39,34 @@ def get_output_name(platform, format_type):
             return f"{APP_NAME_EN}_v{VERSION}_Windows-x64.zip"
     return None
 
+
+def _run(cmd: List[str], *, cwd: Optional[str] = None) -> None:
+    subprocess.run(cmd, cwd=cwd, check=True)
+
+
+def _ensure_clean_venv() -> Tuple[str, str]:
+    """
+    Windows 打包需要「只安装一种 Qt 绑定」的干净环境，否则 PyInstaller 会报：
+    attempt to collect multiple Qt bindings packages (PyQt5/PyQt6)。
+    """
+    build_dir = Path("build") / "windows"
+    venv_dir = build_dir / "venv"
+    if not (venv_dir / ("Scripts" if os.name == "nt" else "bin") / "python").exists():
+        print("创建独立虚拟环境（venv）...")
+        _run([sys.executable, "-m", "venv", str(venv_dir)])
+
+    py = str(venv_dir / ("Scripts" if os.name == "nt" else "bin") / ("python.exe" if os.name == "nt" else "python3"))
+    pip = [py, "-m", "pip"]
+    print("安装依赖到 venv（仅 PyQt6）...")
+    _run(pip + ["install", "--upgrade", "pip"])
+    # 确保不会混入 PyQt5
+    try:
+        _run(pip + ["uninstall", "-y", "PyQt5", "PyQt5-Qt5"])
+    except Exception:
+        pass
+    _run(pip + ["install", "-r", "requirements.txt", "pyinstaller"])
+    return py, str(build_dir)
+
 def main():
     _force_utf8_console()
     print("=" * 50)
@@ -44,28 +74,8 @@ def main():
     print("=" * 50)
     print()
     
-    # 检查 PyInstaller
-    try:
-        import PyInstaller
-    except ImportError:
-        print("✗ 未安装 PyInstaller")
-        print("正在安装 PyInstaller...")
-        os.system("pip install pyinstaller")
-        import PyInstaller
-    
-    print("✓ PyInstaller 已安装")
-    
-    # 检查依赖
-    print("\n检查依赖...")
-    try:
-        import PyQt6
-        import bs4
-        import requests
-    except ImportError:
-        print("⚠ 缺少依赖，正在安装...")
-        os.system("pip install -r requirements.txt")
-    
-    print("✓ 依赖检查完成")
+    py_bin, build_dir_root = _ensure_clean_venv()
+    print("✓ venv 依赖准备完成")
     
     # 创建 Windows spec 文件
     spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
@@ -143,12 +153,10 @@ exe = EXE(
     os.makedirs(dist_dir, exist_ok=True)
     os.makedirs(build_dir, exist_ok=True)
     
-    # 使用 subprocess 而不是 os.system 以获得更好的错误处理
-    import subprocess
-    cmd = ['pyinstaller', spec_file, 
-           '--workpath', build_dir,
-           '--distpath', dist_dir,
-           '--clean', '--noconfirm']
+    cmd = [py_bin, "-m", "PyInstaller", spec_file, 
+           "--workpath", build_dir,
+           "--distpath", dist_dir,
+           "--clean", "--noconfirm"]
     try:
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
         # 打印输出以便调试

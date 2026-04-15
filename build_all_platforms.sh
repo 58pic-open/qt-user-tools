@@ -15,6 +15,8 @@ NC='\033[0m' # No Color
 VERSION="0.0.1"
 APP_NAME="千图网问题解决工具"
 APP_NAME_EN="QiantuTroubleshooter"  # 英文名称，用于文件名
+# Qt5 / PyQt5 旧系统包（与主包区分显示名与产物目录）
+APP_LEGACY_NAME="千图网问题解决工具(10.14+)"
 
 # 输出目录
 DIST_DIR="dist"
@@ -39,6 +41,13 @@ get_output_name() {
                 "app") echo "${APP_NAME}.app" ;;
                 "dmg") echo "${APP_NAME_EN}_v${VERSION}_macOS-Intel.dmg" ;;
                 "zip") echo "${APP_NAME_EN}_v${VERSION}_macOS-Intel.zip" ;;
+            esac
+            ;;
+        "mac-intel-legacy")
+            case "$format" in
+                "app") echo "${APP_LEGACY_NAME}.app" ;;
+                "dmg") echo "${APP_NAME_EN}_v${VERSION}_macOS-Intel-10.14plus.dmg" ;;
+                "zip") echo "${APP_NAME_EN}_v${VERSION}_macOS-Intel-10.14plus.zip" ;;
             esac
             ;;
         "windows")
@@ -66,6 +75,7 @@ echo ""
 # 解析命令行参数
 BUILD_MAC_ARM64=false
 BUILD_MAC_INTEL=false
+BUILD_MAC_INTEL_LEGACY=false
 BUILD_WINDOWS=false
 BUILD_ALL=false
 
@@ -89,6 +99,9 @@ else
             --mac-intel|--intel)
                 BUILD_MAC_INTEL=true
                 ;;
+            --mac-intel-legacy|--intel-legacy)
+                BUILD_MAC_INTEL_LEGACY=true
+                ;;
             --windows|--win)
                 BUILD_WINDOWS=true
                 ;;
@@ -101,6 +114,7 @@ else
                 echo "选项:"
                 echo "  --mac-arm64, --m1     打包 macOS ARM64 (M1/M2)"
                 echo "  --mac-intel, --intel   打包 macOS Intel (x86_64)"
+                echo "  --mac-intel-legacy     打包 macOS Intel 旧系统版（PyQt5，兼容 10.14+）"
                 echo "  --windows, --win       打包 Windows EXE (需要 Wine)"
                 echo "  --all                  打包所有平台"
                 echo "  --help, -h             显示此帮助信息"
@@ -108,6 +122,7 @@ else
                 echo "示例:"
                 echo "  $0 --mac-arm64          # 只打包 macOS ARM64"
                 echo "  $0 --mac-intel          # 只打包 macOS Intel"
+                echo "  $0 --mac-intel-legacy   # 仅旧系统 Intel 包（勿与 --mac-intel 同环境混打）"
                 echo "  $0 --mac-arm64 --mac-intel  # 打包 macOS 两种架构"
                 echo "  $0 --all                # 打包所有平台"
                 exit 0
@@ -475,6 +490,113 @@ EOF
     fi
 }
 
+# 打包 macOS Intel（Qt5 / PyQt5，兼容 macOS 10.14+）
+build_mac_intel_legacy() {
+    echo ""
+    echo -e "${BLUE}========================================${NC}"
+    echo -e "${BLUE}  打包 macOS Intel 旧系统版 (PyQt5 / 10.14+)${NC}"
+    echo -e "${BLUE}========================================${NC}"
+    echo -e "${YELLOW}提示：不要与「标准 Intel(Qt6)」在同一次命令里混打，以免共用同一 Python 环境冲突。${NC}"
+
+    PYTHON_BIN=""
+    if [ "$CURRENT_ARCH" = "arm64" ]; then
+        echo -e "${YELLOW}检测到 Apple Silicon，尝试使用 Rosetta 2...${NC}"
+        if [ -d "venv_x86_64" ] && [ -f "venv_x86_64/bin/python3" ]; then
+            PYTHON_BIN="arch -x86_64 venv_x86_64/bin/python3"
+            echo -e "${GREEN}使用 x86_64 虚拟环境（通过 Rosetta 2）: $PYTHON_BIN${NC}"
+            VENV_ARCH=$(arch -x86_64 venv_x86_64/bin/python3 -c "import platform; print(platform.machine())" 2>/dev/null)
+            if [ "$VENV_ARCH" != "x86_64" ]; then
+                PYTHON_BIN=""
+            fi
+        fi
+        if [ -z "$PYTHON_BIN" ] && command -v arch &> /dev/null; then
+            ARCH_TEST=$(arch -x86_64 python3 -c "import platform; print(platform.machine())" 2>/dev/null)
+            if [ "$ARCH_TEST" = "x86_64" ]; then
+                PYTHON_BIN="arch -x86_64 python3"
+                echo -e "${GREEN}使用 Rosetta 2 运行 x86_64 Python${NC}"
+            else
+                PYTHON_BIN=$(find_python_by_arch "x86_64")
+            fi
+        fi
+        if [ -z "$PYTHON_BIN" ]; then
+            echo -e "${RED}✗ 无法在 Apple Silicon 上打包 x86_64 旧系统版${NC}"
+            return 1
+        fi
+    else
+        PYTHON_BIN=$(find_python_by_arch "x86_64")
+        if [ -z "$PYTHON_BIN" ]; then
+            PYTHON_BIN=$(which python3)
+        fi
+        echo -e "${GREEN}使用 Python: $PYTHON_BIN${NC}"
+    fi
+
+    export QT_USER_TOOLS_USE_PYQT5=1
+    export MACOSX_DEPLOYMENT_TARGET=10.14
+
+    echo -e "${BLUE}安装旧系统依赖（PyQt5）...${NC}"
+    $PYTHON_BIN -m pip install --upgrade pip --quiet 2>/dev/null || true
+    $PYTHON_BIN -m pip uninstall -y PyQt6 PyQt6-Qt6 2>/dev/null || true
+    $PYTHON_BIN -m pip install -r requirements-legacy.txt pyinstaller --quiet 2>/dev/null || \
+        $PYTHON_BIN -m pip install -r requirements-legacy.txt pyinstaller
+
+    BUILD_SUBDIR="$BUILD_DIR/mac_intel_legacy"
+    mkdir -p "$BUILD_SUBDIR"
+    mkdir -p "$DIST_DIR/mac_intel_legacy"
+
+    echo -e "${BLUE}正在打包（build_app_legacy.spec）...${NC}"
+    if ! $PYTHON_BIN -m PyInstaller build_app_legacy.spec \
+        --workpath "$BUILD_SUBDIR" \
+        --distpath "$DIST_DIR/mac_intel_legacy" \
+        --clean \
+        --noconfirm 2>&1 | tee /tmp/pyinstaller_intel_legacy.log; then
+        echo -e "${RED}✗ PyInstaller 旧系统版打包失败${NC}"
+        tail -50 /tmp/pyinstaller_intel_legacy.log || true
+        return 1
+    fi
+
+    if [ -d "$DIST_DIR/mac_intel_legacy/${APP_LEGACY_NAME}.app" ]; then
+        echo -e "${GREEN}✓ macOS Intel 旧系统版打包成功${NC}"
+        APP_PATH="$DIST_DIR/mac_intel_legacy/${APP_LEGACY_NAME}.app"
+        DMG_NAME=$(get_output_name "mac-intel-legacy" "dmg")
+        DMG_OUT="$DIST_DIR/mac_intel_legacy/$DMG_NAME"
+        DMG_TEMP_DIR="$BUILD_SUBDIR/dmg_temp_dir_legacy"
+        rm -rf "$DMG_TEMP_DIR" "$DMG_OUT" 2>/dev/null || true
+        mkdir -p "$DMG_TEMP_DIR"
+        cp -R "$APP_PATH" "$DMG_TEMP_DIR/"
+        ln -s /Applications "$DMG_TEMP_DIR/Applications" || true
+        cat > "$DMG_TEMP_DIR/README.txt" << EOF
+${APP_LEGACY_NAME} V${VERSION}（兼容 macOS 10.14+，Intel）
+====================================
+
+安装说明：
+1. 将「${APP_LEGACY_NAME}.app」拖到「应用程序」
+2. 首次打开如被拦截，请右键 → 打开
+
+说明：本包使用 Qt5，用于无法在 macOS 11+ 上安装标准 Qt6 版的旧系统。
+EOF
+        if hdiutil create -volname "$APP_LEGACY_NAME" \
+            -srcfolder "$DMG_TEMP_DIR" \
+            -ov -format UDZO \
+            "$DMG_OUT" > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ DMG 创建成功: $DMG_OUT${NC}"
+        else
+            echo -e "${YELLOW}⚠ DMG 创建失败（已跳过）${NC}"
+        fi
+        rm -rf "$DMG_TEMP_DIR" 2>/dev/null || true
+
+        ZIP_NAME=$(get_output_name "mac-intel-legacy" "zip")
+        cd "$DIST_DIR/mac_intel_legacy"
+        zip -r -q "$ZIP_NAME" "${APP_LEGACY_NAME}.app" 2>/dev/null || zip -r "$ZIP_NAME" "${APP_LEGACY_NAME}.app"
+        cd - > /dev/null
+        if [ -f "$DIST_DIR/mac_intel_legacy/$ZIP_NAME" ]; then
+            echo -e "${GREEN}✓ ZIP 创建成功: $DIST_DIR/mac_intel_legacy/$ZIP_NAME${NC}"
+        fi
+    else
+        echo -e "${RED}✗ 未找到输出: $DIST_DIR/mac_intel_legacy/${APP_LEGACY_NAME}.app${NC}"
+        return 1
+    fi
+}
+
 # 打包 Windows EXE
 build_windows() {
     echo ""
@@ -594,7 +716,12 @@ EOF
 # 主函数
 main() {
     check_dependencies
-    install_dependencies
+    # 仅打旧系统 Intel 包时跳过默认 PyQt6 依赖安装，避免与 PyQt5 环境互相干扰
+    if [ "$BUILD_MAC_INTEL_LEGACY" = true ] && [ "$BUILD_MAC_ARM64" != true ] && [ "$BUILD_MAC_INTEL" != true ] && [ "$BUILD_WINDOWS" != true ] && [ "$BUILD_ALL" != true ]; then
+        echo -e "${YELLOW}仅构建旧系统 Intel 包：跳过 requirements.txt（PyQt6）安装${NC}"
+    else
+        install_dependencies
+    fi
     
     # 创建输出目录
     mkdir -p "$DIST_DIR"
@@ -614,6 +741,14 @@ main() {
     # 打包 macOS Intel
     if [ "$BUILD_MAC_INTEL" = true ]; then
         if build_mac_intel; then
+            ((SUCCESS_COUNT++))
+        else
+            ((FAIL_COUNT++))
+        fi
+    fi
+
+    if [ "$BUILD_MAC_INTEL_LEGACY" = true ]; then
+        if build_mac_intel_legacy; then
             ((SUCCESS_COUNT++))
         else
             ((FAIL_COUNT++))
@@ -656,6 +791,12 @@ main() {
     if [ "$BUILD_MAC_INTEL" = true ] && [ -d "$DIST_DIR/mac_intel" ]; then
         echo -e "${GREEN}macOS Intel:${NC}"
         ls -lh "$DIST_DIR/mac_intel" | grep -E "\.(app|dmg|zip)" | awk '{print "  " $9 " (" $5 ")"}'
+        echo ""
+    fi
+
+    if [ "$BUILD_MAC_INTEL_LEGACY" = true ] && [ -d "$DIST_DIR/mac_intel_legacy" ]; then
+        echo -e "${GREEN}macOS Intel（10.14+ 旧系统版）:${NC}"
+        ls -lh "$DIST_DIR/mac_intel_legacy" | grep -E "\.(app|dmg|zip)" | awk '{print "  " $9 " (" $5 ")"}'
         echo ""
     fi
     

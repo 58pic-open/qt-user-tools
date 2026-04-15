@@ -9,9 +9,16 @@ import os
 import sys
 import platform
 
-from PyQt6.QtWidgets import QApplication, QMessageBox
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QIcon
+from gui.qt_api import (
+    QApplication,
+    QMessageBox,
+    QTimer,
+    QIcon,
+    ICON_WARNING,
+    ICON_INFORMATION,
+    STD_YES_NO,
+    STD_YES,
+)
 
 # 添加路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -58,7 +65,7 @@ def show_permission_warning(app):
         )
     
     msg = QMessageBox()
-    msg.setIcon(QMessageBox.Icon.Warning)
+    msg.setIcon(ICON_WARNING)
     msg.setWindowTitle("权限提示")
     msg.setText(message)
     msg.setInformativeText(
@@ -83,9 +90,9 @@ def handle_tool_request(tool_type: str, main_window: MainWindow):
                 main_window,
                 "确认清除",
                 "清除浏览器缓存前请先关闭浏览器！\n\n确定要继续吗？",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                STD_YES_NO,
             )
-            if reply == QMessageBox.StandardButton.Yes:
+            if reply == STD_YES:
                 try:
                     clear_all_browsers(auto_fix=True)
                     QMessageBox.information(
@@ -113,7 +120,7 @@ def handle_tool_request(tool_type: str, main_window: MainWindow):
         elif tool_type == 'check_browser':
             dialog = QMessageBox(main_window)
             dialog.setWindowTitle("浏览器版本检查")
-            dialog.setIcon(QMessageBox.Icon.Information)
+            dialog.setIcon(ICON_INFORMATION)
             
             try:
                 from browser.check_browser import check_all_browsers

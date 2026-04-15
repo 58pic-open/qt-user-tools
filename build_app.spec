@@ -49,7 +49,14 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    # 避免在仅安装 PyQt6 的机器上误打入 PyQt5（若本机同时装了两者）
+    excludes=[
+        "PyQt5",
+        "PyQt5.QtCore",
+        "PyQt5.QtGui",
+        "PyQt5.QtWidgets",
+        "PyQt5.sip",
+    ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
@@ -105,6 +112,7 @@ app = BUNDLE(
         'CFBundleShortVersionString': '0.0.1',
         'CFBundleVersion': '0.0.1',
         'NSHumanReadableCopyright': 'Copyright © 2024 千图网',
-        'LSMinimumSystemVersion': '10.13',
+        # Qt6 / PyQt6 官方 macOS 二进制通常以 Big Sur 为最低系统；写 10.13 会在旧系统上出现“要求版本”与无法启动的矛盾提示
+        'LSMinimumSystemVersion': '11.0',
     },
 )

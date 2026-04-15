@@ -9,12 +9,32 @@ import os
 import sys
 import platform
 from typing import Optional
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QProgressBar, QTextEdit, QMessageBox, QScrollArea, QWidget, QToolButton, QTabWidget
+from gui.qt_api import (
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QProgressBar,
+    QTextEdit,
+    QMessageBox,
+    QScrollArea,
+    QWidget,
+    QToolButton,
+    QTabWidget,
+    QThread,
+    pyqtSignal,
+    QFont,
+    QPixmap,
+    ALIGN_CENTER,
+    FONT_WEIGHT_BOLD,
+    POINTING_HAND_CURSOR,
+    TOOLBUTTON_TEXT_ONLY,
+    KEEP_ASPECT_RATIO,
+    SMOOTH_TRANSFORMATION,
+    STD_YES_NO,
+    STD_YES,
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QFont, QPixmap
 
 # 添加路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -370,7 +390,7 @@ class ProblemDialog(QDialog):
         
         # 问题描述
         desc_label = QLabel("📋 问题描述")
-        desc_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        desc_label.setFont(QFont("Arial", 12, FONT_WEIGHT_BOLD))
         layout.addWidget(desc_label)
         
         desc_text = QTextEdit()
@@ -386,8 +406,8 @@ class ProblemDialog(QDialog):
             manual_toggle_top.setCheckable(True)
             manual_toggle_top.setChecked(True)  # 默认展开，确保用户能看到
             manual_toggle_top.setText("🧩 手动修复步骤（不用点“立即修复”也能自己改）")
-            manual_toggle_top.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
-            manual_toggle_top.setCursor(Qt.CursorShape.PointingHandCursor)
+            manual_toggle_top.setToolButtonStyle(TOOLBUTTON_TEXT_ONLY)
+            manual_toggle_top.setCursor(POINTING_HAND_CURSOR)
             manual_toggle_top.setStyleSheet(
                 "QToolButton { text-align: left; font-weight: bold; padding: 6px 4px; }"
                 "QToolButton:hover { color: #1890ff; }"
@@ -450,7 +470,7 @@ class ProblemDialog(QDialog):
         images = PROBLEM_IMAGES.get(self.problem_type, [])
         if images and self.problem_type != 'safari_cache':  # Safari问题在引导教程中显示图片
             image_label = QLabel("🖼️ 问题示例（点击图片可放大查看）")
-            image_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+            image_label.setFont(QFont("Arial", 12, FONT_WEIGHT_BOLD))
             layout.addWidget(image_label)
             
             # 图片容器（不使用滚动，直接显示缩略图）
@@ -476,13 +496,13 @@ class ProblemDialog(QDialog):
                         # 创建缩略图（宽度200px）
                         thumbnail_pixmap = original_pixmap.scaled(
                             200, int(200 * original_pixmap.height() / original_pixmap.width()),
-                            Qt.AspectRatioMode.KeepAspectRatio,
-                            Qt.TransformationMode.SmoothTransformation
+                            KEEP_ASPECT_RATIO,
+                            SMOOTH_TRANSFORMATION
                         )
                         
                         # 使用可点击的图片标签
                         img_label = ClickableImageLabel(original_pixmap, thumbnail_pixmap)
-                        images_layout.addWidget(img_label, alignment=Qt.AlignmentFlag.AlignCenter)
+                        images_layout.addWidget(img_label, alignment=ALIGN_CENTER)
             
             images_widget.setLayout(images_layout)
             layout.addWidget(images_widget)
@@ -491,7 +511,7 @@ class ProblemDialog(QDialog):
         if self.problem_type == 'safari_cache':
             # Safari清除缓存引导教程
             guide_label = QLabel("📖 操作步骤")
-            guide_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+            guide_label.setFont(QFont("Arial", 12, FONT_WEIGHT_BOLD))
             layout.addWidget(guide_label)
             
             guide_text = QTextEdit()
@@ -523,7 +543,7 @@ class ProblemDialog(QDialog):
             safari_images = PROBLEM_IMAGES.get('safari_cache', [])
             if safari_images:
                 image_label = QLabel("🖼️ 操作示例（点击图片可放大查看）")
-                image_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+                image_label.setFont(QFont("Arial", 12, FONT_WEIGHT_BOLD))
                 layout.addWidget(image_label)
                 
                 images_widget = QWidget()
@@ -546,20 +566,20 @@ class ProblemDialog(QDialog):
                             # 创建缩略图（宽度200px）
                             thumbnail_pixmap = original_pixmap.scaled(
                                 200, int(200 * original_pixmap.height() / original_pixmap.width()),
-                                Qt.AspectRatioMode.KeepAspectRatio,
-                                Qt.TransformationMode.SmoothTransformation
+                                KEEP_ASPECT_RATIO,
+                                SMOOTH_TRANSFORMATION
                             )
                             
                             # 使用可点击的图片标签
                             img_label = ClickableImageLabel(original_pixmap, thumbnail_pixmap)
-                            images_layout.addWidget(img_label, alignment=Qt.AlignmentFlag.AlignCenter)
+                            images_layout.addWidget(img_label, alignment=ALIGN_CENTER)
                 
                 images_widget.setLayout(images_layout)
                 layout.addWidget(images_widget)
             
             # 重要提示
             warning_label = QLabel("⚠️ 重要提示")
-            warning_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+            warning_label.setFont(QFont("Arial", 12, FONT_WEIGHT_BOLD))
             layout.addWidget(warning_label)
             
             warning_text = QTextEdit()
@@ -576,7 +596,7 @@ class ProblemDialog(QDialog):
             # 其他问题的正常显示
             # 解决方案
             solution_label = QLabel("🔧 解决方案")
-            solution_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+            solution_label.setFont(QFont("Arial", 12, FONT_WEIGHT_BOLD))
             layout.addWidget(solution_label)
             
             solution_text = QTextEdit()
@@ -588,7 +608,7 @@ class ProblemDialog(QDialog):
 
             # 进度区域
             progress_label = QLabel("🌐 修复进度")
-            progress_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+            progress_label.setFont(QFont("Arial", 12, FONT_WEIGHT_BOLD))
             layout.addWidget(progress_label)
             
             self.progress_bar = QProgressBar()
@@ -622,7 +642,7 @@ class ProblemDialog(QDialog):
             
             # 重要提示
             warning_label = QLabel("⚠️ 重要提示")
-            warning_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+            warning_label.setFont(QFont("Arial", 12, FONT_WEIGHT_BOLD))
             layout.addWidget(warning_label)
             
             warning_text = QTextEdit()
@@ -756,10 +776,10 @@ class ProblemDialog(QDialog):
             "确认修复",
             "确定要执行修复操作吗？\n\n"
             "此操作将修改hosts文件，需要管理员权限。",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            STD_YES_NO,
         )
         
-        if reply == QMessageBox.StandardButton.Yes:
+        if reply == STD_YES:
             self.fix_btn.setEnabled(False)
             self.fix_btn.setText("修复中...")
             

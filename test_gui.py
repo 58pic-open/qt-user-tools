@@ -16,10 +16,13 @@ def test_imports():
     print("测试模块导入...")
     
     try:
-        from PyQt6.QtWidgets import QApplication
-        print("✓ PyQt6导入成功")
+        from gui import qt_api
+        from gui.qt_api import QApplication
+
+        print(f"✓ Qt 后端: {'PyQt5' if qt_api.USE_PYQT5 else 'PyQt6'}")
+        assert QApplication is not None
     except ImportError as e:
-        print(f"✗ PyQt6导入失败: {e}")
+        print(f"✗ Qt 导入失败: {e}")
         return False
     
     try:

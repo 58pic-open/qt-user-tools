@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>千图心声工具｜下载</title>
+    <meta name="description" content="解决常见客户问题（预览图、样式、下载、主站、Safari）。macOS 需 11.0 及以上。" />
+    <meta name="color-scheme" content="dark light" />
+
+    <meta property="og:title" content="千图心声工具｜下载" />
+    <meta property="og:description" content="解决常见客户问题；macOS 需 11.0 及以上。" />
+    <meta property="og:type" content="website" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg0: #fff7e6;
+        --bg1: #f4fbff;
+        --ink: rgba(16, 24, 40, 0.92);
+        --muted: rgba(16, 24, 40, 0.72);
+        --muted2: rgba(16, 24, 40, 0.56);
+        --line: rgba(16, 24, 40, 0.12);
+        --shadow: 0 16px 40px rgba(16, 24, 40, 0.12);
+        --accent: #14b8a6;
+        --accent2: #0f766e;
+        --radius: 18px;
+        --display: "Fraunces", serif;
+        --body: "Noto Sans SC", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--body);
+        background: radial-gradient(1000px 640px at 12% 0%, rgba(255, 199, 61, 0.38), transparent 62%),
+          radial-gradient(980px 680px at 92% 8%, rgba(20, 184, 166, 0.26), transparent 62%),
+          radial-gradient(1100px 760px at 50% 115%, rgba(56, 189, 248, 0.22), transparent 66%),
+          linear-gradient(180deg, var(--bg0), var(--bg1));
+        overflow-x: hidden;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .wrap {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 28px 18px 76px;
+      }
+
+      /* subtle noise */
+      .noise {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        opacity: 0.07;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(14px);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.55));
+        border-bottom: 1px solid rgba(16, 24, 40, 0.08);
+      }
+
+      .topbar {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: radial-gradient(circle at 30% 25%, rgba(255, 199, 61, 0.22), transparent 58%),
+          rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(16, 24, 40, 0.1);
+        box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        flex: 0 0 auto;
+      }
+
+      .logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 2px;
+        display: block;
+        filter: drop-shadow(0 6px 10px rgba(16, 24, 40, 0.14));
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-family: var(--display);
+        font-weight: 900;
+        font-size: 16px;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(20, 184, 166, 0.26);
+        background: rgba(20, 184, 166, 0.12);
+        color: rgba(16, 24, 40, 0.86);
+        font-size: 12px;
+        box-shadow: 0 18px 55px rgba(16, 24, 40, 0.08);
+        white-space: nowrap;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 6px rgba(20, 184, 166, 0.14);
+      }
+
+      .hero {
+        padding: 18px 0 12px;
+      }
+
+      .heroCard {
+        border-radius: calc(var(--radius) + 4px);
+        border: 1px solid rgba(16, 24, 40, 0.1);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58));
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .heroCard:before {
+        content: "";
+        position: absolute;
+        inset: -140px -120px auto auto;
+        width: 420px;
+        height: 420px;
+        background: radial-gradient(circle at 30% 30%, rgba(255, 199, 61, 0.42), transparent 62%);
+        transform: rotate(18deg);
+        filter: blur(2px);
+      }
+
+      .heroInner {
+        padding: 22px 18px 18px;
+        position: relative;
+      }
+
+      .title {
+        margin: 0;
+        font-family: var(--display);
+        font-weight: 900;
+        letter-spacing: 0.2px;
+        font-size: clamp(30px, 3.6vw, 46px);
+        line-height: 1.03;
+      }
+
+      .subtitle {
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        max-width: 62ch;
+      }
+
+      .req {
+        margin: 8px 0 0;
+        color: var(--muted2);
+        font-size: 13px;
+        max-width: 62ch;
+      }
+
+      .issues {
+        margin-top: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .issue {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(16, 24, 40, 0.12);
+        background: rgba(255, 255, 255, 0.7);
+        color: rgba(16, 24, 40, 0.86);
+        font-size: 13px;
+      }
+
+      .issue i {
+        width: 26px;
+        height: 26px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 199, 61, 0.2);
+        border: 1px solid rgba(255, 199, 61, 0.35);
+        font-style: normal;
+      }
+
+      .deck {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border-top: 1px solid rgba(16, 24, 40, 0.06);
+        background: rgba(255, 255, 255, 0.42);
+        position: relative;
+      }
+
+      .dlCard {
+        grid-column: span 3;
+        border-radius: var(--radius);
+        border: 1px solid rgba(16, 24, 40, 0.1);
+        background: rgba(255, 255, 255, 0.74);
+        padding: 14px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+      }
+
+      .dlCard:hover {
+        transform: translateY(-2px);
+        border-color: rgba(20, 184, 166, 0.28);
+        background: rgba(20, 184, 166, 0.08);
+      }
+
+      .dlCard.active {
+        border-color: rgba(20, 184, 166, 0.55);
+        background: rgba(20, 184, 166, 0.12);
+        box-shadow: 0 20px 70px rgba(16, 24, 40, 0.16);
+      }
+
+      .dlTop {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .dlName {
+        margin: 0;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        font-size: 14px;
+      }
+
+      .dlTag {
+        font-size: 12px;
+        color: rgba(16, 24, 40, 0.7);
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(16, 24, 40, 0.12);
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .dlDesc {
+        margin: 8px 0 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .dlActions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        border: 1px solid rgba(16, 24, 40, 0.12);
+        background: rgba(255, 255, 255, 0.86);
+        color: rgba(16, 24, 40, 0.9);
+        padding: 10px 12px;
+        border-radius: 14px;
+        font-size: 13px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(20, 184, 166, 0.35);
+        background: rgba(20, 184, 166, 0.12);
+      }
+
+      .btn.primary {
+        background: linear-gradient(180deg, rgba(255, 199, 61, 0.62), rgba(255, 199, 61, 0.34));
+        border-color: rgba(255, 199, 61, 0.7);
+      }
+
+      .btn.primary:hover {
+        background: linear-gradient(180deg, rgba(255, 199, 61, 0.72), rgba(255, 199, 61, 0.4));
+        border-color: rgba(255, 199, 61, 0.86);
+      }
+
+      .helpRow {
+        padding: 14px 14px 0;
+      }
+
+      details {
+        border: 1px solid rgba(16, 24, 40, 0.1);
+        background: rgba(255, 255, 255, 0.72);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+      }
+
+      summary {
+        cursor: pointer;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+
+      .helpText {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .helpText code {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: rgba(16, 24, 40, 0.86);
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(16, 24, 40, 0.12);
+        padding: 2px 6px;
+        border-radius: 10px;
+      }
+
+      .mini {
+        margin-top: 10px;
+        color: var(--muted2);
+        font-size: 12px;
+      }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 22px;
+        transform: translateX(-50%);
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(16, 24, 40, 0.14);
+        background: rgba(255, 255, 255, 0.88);
+        color: rgba(16, 24, 40, 0.9);
+        font-size: 12px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 180ms ease, transform 180ms ease;
+      }
+
+      .toast.on {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-2px);
+      }
+
+      @media (max-width: 940px) {
+        .deck {
+          grid-template-columns: 1fr;
+        }
+        .dlCard {
+          grid-column: span 12;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <header>
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">
+            <img
+              src="app_icon.png"
+              alt=""
+              referrerpolicy="no-referrer"
+              onerror="this.onerror=null; this.src='./app_icon.png';"
+            />
+          </div>
+          <h1>千图心声工具</h1>
+        </div>
+        <div class="badge" id="deviceBadge"><span class="dot"></span><span>正在识别设备…</span></div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero" id="top" aria-label="下载">
+        <div class="heroCard">
+          <div class="heroInner">
+            <h2 class="title">千图心声工具</h2>
+            <p class="subtitle">解决常见客户问题：预览图不显示、样式异常、下载失败、主站打不开、Safari 异常。</p>
+            <p class="req">
+              标准版需 macOS 11+。若系统为 macOS 10.14（Mojave）等旧版 Intel，请下载「Intel · 旧系统」包（Qt5）。
+            </p>
+
+            <div class="issues" aria-label="解决的问题">
+              <span class="issue"><i>🖼️</i>预览图</span>
+              <span class="issue"><i>🎨</i>样式</span>
+              <span class="issue"><i>⬇️</i>下载</span>
+              <span class="issue"><i>🌐</i>主站</span>
+              <span class="issue"><i>🧭</i>Safari</span>
+            </div>
+          </div>
+
+          <div class="deck" aria-label="下载选择">
+            <div class="dlCard" id="dl-win">
+              <div class="dlTop">
+                <h3 class="dlName">Windows</h3>
+                <span class="dlTag">.exe</span>
+              </div>
+              <p class="dlDesc">Windows 10/11（64 位）</p>
+              <div class="dlActions">
+                <a class="btn primary" data-dl="win" href="https://preview.58pic.com/AI/RD/QiantuTroubleshooter_v0.0.1_Windows-x64.exe">下载</a>
+                <button class="btn" data-copy="https://preview.58pic.com/AI/RD/QiantuTroubleshooter_v0.0.1_Windows-x64.exe">复制链接</button>
+              </div>
+            </div>
+
+            <div class="dlCard" id="dl-mac-arm">
+              <div class="dlTop">
+                <h3 class="dlName">macOS · Apple 芯片</h3>
+                <span class="dlTag">ARM64 .dmg</span>
+              </div>
+              <p class="dlDesc">Apple 芯片 · 需 macOS 11+</p>
+              <div class="dlActions">
+                <a class="btn primary" data-dl="mac-arm" href="https://preview.58pic.com/AI/RD/QiantuTroubleshooter_v0.0.1_macOS-ARM64.dmg">下载</a>
+                <button class="btn" data-copy="https://preview.58pic.com/AI/RD/QiantuTroubleshooter_v0.0.1_macOS-ARM64.dmg">复制链接</button>
+              </div>
+            </div>
+
+            <div class="dlCard" id="dl-mac-intel">
+              <div class="dlTop">
+                <h3 class="dlName">macOS · Intel</h3>
+                <span class="dlTag">Intel .dmg</span>
+              </div>
+              <p class="dlDesc">Intel · 需 macOS 11+</p>
+              <div class="dlActions">
+                <a class="btn" data-dl="mac-intel" href="https://preview.58pic.com/AI/RD/QiantuTroubleshooter_v0.0.1_macOS-Intel.dmg">下载</a>
+                <button class="btn" data-copy="https://preview.58pic.com/AI/RD/QiantuTroubleshooter_v0.0.1_macOS-Intel.dmg">复制链接</button>
+              </div>
+            </div>
+
+            <div class="dlCard" id="dl-mac-intel-legacy">
+              <div class="dlTop">
+                <h3 class="dlName">macOS · Intel 旧系统</h3>
+                <span class="dlTag">10.14+ .dmg</span>
+              </div>
+              <p class="dlDesc">Mojave 等 · Qt5 兼容包</p>
+              <div class="dlActions">
+                <a class="btn" data-dl="mac-intel-legacy" href="https://preview.58pic.com/AI/RD/QiantuTroubleshooter_v0.0.1_macOS-Intel-10.14plus.dmg">下载</a>
+                <button class="btn" data-copy="https://preview.58pic.com/AI/RD/QiantuTroubleshooter_v0.0.1_macOS-Intel-10.14plus.dmg">复制链接</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="helpRow">
+            <details id="help">
+              <summary>我不确定下载哪个 macOS 版本</summary>
+              <div class="helpText">
+                苹果菜单 → <b>关于本机</b>：看到 <code>芯片：Apple M*</code> 选 <b>ARM64</b>；看到 <code>处理器：Intel</code> 且系统 <b>10.14</b> 左右选 <b>Intel 旧系统</b>；Intel 且系统较新选 <b>Intel</b>（需 macOS 11+）。
+              </div>
+              <div class="helpText">移动端打开？建议先点“复制链接”，发到电脑下载。</div>
+            </details>
+            <div class="mini" id="miniNote"></div>
+          </div>
+        </div>
+
+        <div class="toast" id="toast" role="status" aria-live="polite">已复制</div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const toast = document.getElementById("toast");
+        const badge = document.getElementById("deviceBadge");
+        const miniNote = document.getElementById("miniNote");
+        const dlWin = document.getElementById("dl-win");
+        const dlMacArm = document.getElementById("dl-mac-arm");
+        const dlMacIntel = document.getElementById("dl-mac-intel");
+        const dlMacIntelLegacy = document.getElementById("dl-mac-intel-legacy");
+
+        function setActive(which) {
+          for (const el of [dlWin, dlMacArm, dlMacIntel, dlMacIntelLegacy]) el && el.classList.remove("active");
+          if (which === "win") dlWin && dlWin.classList.add("active");
+          if (which === "mac-arm") dlMacArm && dlMacArm.classList.add("active");
+          if (which === "mac-intel") dlMacIntel && dlMacIntel.classList.add("active");
+          if (which === "mac-intel-legacy") dlMacIntelLegacy && dlMacIntelLegacy.classList.add("active");
+        }
+
+        function guessPlatform() {
+          const ua = navigator.userAgent || "";
+          const isWin = /Windows/i.test(ua);
+          const isMac = /Macintosh|Mac OS X/i.test(ua);
+          const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+          return { isWin, isMac, isMobile, ua };
+        }
+
+        function showBadge(text) {
+          badge.innerHTML = `<span class="dot"></span><span>${text}</span>`;
+        }
+
+        async function copy(text) {
+          try {
+            await navigator.clipboard.writeText(text);
+            toast.textContent = "已复制下载链接";
+          } catch (e) {
+            // fallback
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {
+              document.execCommand("copy");
+              toast.textContent = "已复制下载链接";
+            } catch {
+              toast.textContent = "复制失败，请手动复制";
+            }
+            document.body.removeChild(ta);
+          }
+          toast.classList.add("on");
+          setTimeout(() => toast.classList.remove("on"), 1200);
+        }
+
+        document.addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-copy]");
+          if (!btn) return;
+          e.preventDefault();
+          copy(btn.getAttribute("data-copy"));
+        });
+
+        // default anchor to current device type
+        const { isWin, isMac, isMobile, ua } = guessPlatform();
+
+        if (isMobile) {
+          showBadge("移动设备：建议复制链接到电脑下载");
+          setActive("mac-arm");
+          if (miniNote) miniNote.textContent = "移动端可能无法直接安装运行。";
+        } else if (isWin) {
+          showBadge("已识别：Windows");
+          setActive("win");
+          if (miniNote) miniNote.textContent = "若下载被拦截：选择“保留/仍要下载”。";
+        } else if (isMac) {
+          showBadge("已识别：macOS");
+          setActive("mac-arm");
+          if (miniNote) miniNote.textContent = "多数新 Mac 选 ARM64；不确定可展开“我不确定”。";
+        } else {
+          showBadge("未识别系统：请选择对应版本");
+          setActive("mac-arm");
+          if (miniNote) miniNote.textContent = "不确定请选择 ARM64；打不开再换 Intel。";
+        }
+      })();
+    </script>
+  </body>
+</html>
+

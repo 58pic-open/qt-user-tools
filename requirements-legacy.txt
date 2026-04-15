@@ -1,0 +1,7 @@
+# macOS 10.14+（Mojave 等）兼容包：使用 Qt5 / PyQt5，与主线的 PyQt6 版并存、单独打包。
+requests>=2.28.0
+beautifulsoup4>=4.11.0
+lxml>=4.9.0
+PyQt5>=5.15.9
+PyQt5-Qt5>=5.15.2
+netifaces>=0.11.0

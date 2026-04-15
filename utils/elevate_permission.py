@@ -7,11 +7,59 @@
 
 import os
 import sys
+import json
+import base64
 import platform
 import subprocess
 import tempfile
 import shutil
-from typing import Optional, Tuple
+import secrets
+from typing import Tuple
+
+
+def _windows_ps_encoded_command(script: str) -> str:
+    """PowerShell -EncodedCommand 需要 UTF-16LE 的 Base64。"""
+    return base64.b64encode(script.encode("utf-16le")).decode("ascii")
+
+
+def _windows_run_elevated_powershell(inner_ps: str, timeout: int = 180) -> Tuple[bool, str]:
+    """
+    在管理员 PowerShell 中执行 inner_ps，并等待结束。
+    不使用 sys.executable：PyInstaller 打包后 exe 再运行会拉起第二个 GUI，且 ShellExecuteW 不等待会导致临时脚本被删失败。
+    """
+    enc_inner = _windows_ps_encoded_command(inner_ps.strip() + "\r\n")
+    outer_ps = (
+        "$ErrorActionPreference='Stop';"
+        f"$p=Start-Process -FilePath powershell.exe -Verb RunAs -PassThru -Wait "
+        f"-ArgumentList @('-NoProfile','-NonInteractive','-WindowStyle','Hidden','-EncodedCommand','{enc_inner}');"
+        "if ($null -eq $p) { exit 1 };"
+        "exit $p.ExitCode"
+    )
+    creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        r = subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-NonInteractive",
+                "-WindowStyle",
+                "Hidden",
+                "-Command",
+                outer_ps,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            creationflags=creationflags,
+        )
+        if r.returncode == 0:
+            return True, ""
+        msg = (r.stderr or "").strip() or (r.stdout or "").strip() or f"exit {r.returncode}"
+        return False, msg
+    except subprocess.TimeoutExpired:
+        return False, "等待 UAC / 管理员操作超时（请确认已点「是」）"
+    except Exception as e:
+        return False, str(e)
 
 
 def check_permission() -> bool:
@@ -49,39 +97,21 @@ def elevate_copy_file(src_path: str, dst_path: str) -> Tuple[bool, str]:
 
 
 def _elevate_copy_windows(src_path: str, dst_path: str) -> Tuple[bool, str]:
-    """Windows系统：使用UAC提升权限复制文件"""
+    """Windows：管理员 PowerShell 复制（避免用 exe 跑 .py 导致多窗口 / 未等待）。"""
     try:
         import ctypes
-        from ctypes import wintypes
-        
+
         if ctypes.windll.shell32.IsUserAnAdmin():
             shutil.copy2(src_path, dst_path)
             return True, ""
-        
-        # 需要提升权限
-        temp_script = tempfile.NamedTemporaryFile(
-            mode='w', suffix='.py', delete=False, encoding='utf-8'
+
+        s_lit = json.dumps(os.path.normpath(src_path), ensure_ascii=False)
+        d_lit = json.dumps(os.path.normpath(dst_path), ensure_ascii=False)
+        inner = (
+            f"Copy-Item -LiteralPath {s_lit} -Destination {d_lit} -Force;"
+            "if (-not (Test-Path -LiteralPath {0})) {{ exit 1 }}; exit 0".format(d_lit)
         )
-        temp_script.write(f'''
-import shutil
-shutil.copy2(r"{src_path}", r"{dst_path}")
-''')
-        temp_script.close()
-        
-        result = ctypes.windll.shell32.ShellExecuteW(
-            None, "runas", sys.executable, temp_script.name, None, 1
-        )
-        
-        try:
-            os.unlink(temp_script.name)
-        except:
-            pass
-        
-        if result > 32:
-            return True, ""
-        else:
-            return False, f"权限提升失败 (错误代码: {result})"
-            
+        return _windows_run_elevated_powershell(inner)
     except Exception as e:
         return False, f"Windows权限提升失败: {str(e)}"
 
@@ -156,51 +186,39 @@ def elevate_write_file(file_path: str, content: str) -> Tuple[bool, str]:
 
 
 def _elevate_write_windows(file_path: str, content: str) -> Tuple[bool, str]:
-    """Windows系统：使用UAC提升权限"""
+    """Windows：先写入用户可写临时文件，再由管理员 PowerShell 覆盖系统 hosts（无命令行长度问题）。"""
     try:
         import ctypes
-        from ctypes import wintypes
-        
-        # 检查是否已有管理员权限
+
         if ctypes.windll.shell32.IsUserAnAdmin():
-            # 直接写入
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8", newline="\n") as f:
                 f.write(content)
             return True, ""
-        
-        # 需要提升权限，使用ShellExecuteW
-        # 创建一个临时脚本文件来执行写入操作
-        temp_script = tempfile.NamedTemporaryFile(
-            mode='w', suffix='.py', delete=False, encoding='utf-8'
+
+        tmp = os.path.join(
+            tempfile.gettempdir(),
+            f"qiantu_hosts_payload_{secrets.token_hex(8)}.tmp",
         )
-        temp_script.write(f'''
-import sys
-with open(r"{file_path}", "w", encoding="utf-8") as f:
-    f.write({repr(content)})
-''')
-        temp_script.close()
-        
-        # 使用ShellExecuteW以管理员权限运行Python脚本
-        result = ctypes.windll.shell32.ShellExecuteW(
-            None,
-            "runas",  # 请求管理员权限
-            sys.executable,
-            temp_script.name,
-            None,
-            1  # SW_SHOWNORMAL
-        )
-        
-        # 清理临时文件
         try:
-            os.unlink(temp_script.name)
-        except:
-            pass
-        
-        if result > 32:  # 成功
-            return True, ""
-        else:
-            return False, f"权限提升失败 (错误代码: {result})"
-            
+            with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+                f.write(content)
+
+            src_lit = json.dumps(os.path.normpath(tmp), ensure_ascii=False)
+            dst_lit = json.dumps(os.path.normpath(file_path), ensure_ascii=False)
+            inner = (
+                f"$t = [System.IO.File]::ReadAllText({src_lit}, [System.Text.UTF8Encoding]::new($false));"
+                f"[System.IO.File]::WriteAllText({dst_lit}, $t, [System.Text.UTF8Encoding]::new($false));"
+                f"Remove-Item -LiteralPath {src_lit} -Force -ErrorAction SilentlyContinue;"
+                f"exit 0"
+            )
+            ok, err = _windows_run_elevated_powershell(inner)
+            return ok, err
+        finally:
+            try:
+                if os.path.isfile(tmp):
+                    os.unlink(tmp)
+            except OSError:
+                pass
     except Exception as e:
         return False, f"Windows权限提升失败: {str(e)}"
 

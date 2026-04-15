@@ -179,6 +179,57 @@ jobs:
           if-no-files-found: warn  # 如果没有文件，只警告不失败
           retention-days: 30
 
+  build-macos-intel-legacy:
+    name: Build macOS Intel (Qt5 / 10.14+)
+    runs-on: macos-14-large
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python (x86_64)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+
+      - name: Cache pip packages (legacy)
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/pip
+          key: ${{ runner.os }}-intel-legacy-pip-${{ hashFiles('requirements-legacy.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-intel-legacy-pip-
+
+      - name: Build macOS Intel legacy (PyQt5)
+        env:
+          QT_USER_TOOLS_USE_PYQT5: '1'
+          MACOSX_DEPLOYMENT_TARGET: '10.14'
+        run: |
+          chmod +x build_all_platforms.sh
+          set -x
+          ./build_all_platforms.sh --mac-intel-legacy
+
+      - name: Verify build output
+        run: |
+          echo "Checking legacy build output..."
+          if [ ! -d "dist/mac_intel_legacy" ]; then
+            echo "Error: dist/mac_intel_legacy not found"
+            ls -la dist/ || true
+            exit 1
+          fi
+          find dist/mac_intel_legacy -maxdepth 2 \( -name '*.app' -o -name '*.dmg' -o -name '*.zip' \) | head -20
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macos-intel-legacy
+          path: |
+            dist/mac_intel_legacy/**/*
+          if-no-files-found: warn
+          retention-days: 30
+
   build-windows:
     name: Build Windows EXE
     runs-on: windows-latest
@@ -265,7 +316,7 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: [build-macos-arm64, build-macos-intel, build-windows]
+    needs: [build-macos-arm64, build-macos-intel, build-macos-intel-legacy, build-windows]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     
@@ -281,6 +332,7 @@ jobs:
           files: |
             artifacts/macos-arm64/**
             artifacts/macos-intel/**
+            artifacts/macos-intel-legacy/**
             artifacts/windows-exe/**
           draft: false
           prerelease: false

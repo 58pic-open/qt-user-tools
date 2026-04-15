@@ -9,12 +9,28 @@ import os
 import sys
 import platform
 
-from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QPushButton, QLineEdit, QStatusBar, QMessageBox
+from gui.qt_api import (
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout,
+    QLabel,
+    QPushButton,
+    QLineEdit,
+    QStatusBar,
+    QMessageBox,
+    Qt,
+    pyqtSignal,
+    QTimer,
+    QThread,
+    QFont,
+    QIcon,
+    ALIGN_CENTER,
+    FONT_WEIGHT_BOLD,
+    POINTING_HAND_CURSOR,
+    ICON_INFORMATION,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QThread
-from PyQt6.QtGui import QFont, QIcon
 
 # 添加路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -99,20 +115,20 @@ class MainWindow(QMainWindow):
         
         # 标题
         title_label = QLabel("🎨 千图网问题解决工具")
-        title_label.setFont(QFont("Arial", 20, QFont.Weight.Bold))
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label.setFont(QFont("Arial", 20, FONT_WEIGHT_BOLD))
+        title_label.setAlignment(ALIGN_CENTER)
         main_layout.addWidget(title_label)
         
         # 版本信息
         version_label = QLabel("V0.0.1")
         version_label.setFont(QFont("Arial", 10))
-        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        version_label.setAlignment(ALIGN_CENTER)
         version_label.setStyleSheet("color: #666666; margin-top: -5px; margin-bottom: 5px;")  # 提高对比度
         main_layout.addWidget(version_label)
         
         # 问题卡片区域
         problems_label = QLabel("📋 常见问题快速修复")
-        problems_label.setFont(QFont("Arial", 15, QFont.Weight.Bold))
+        problems_label.setFont(QFont("Arial", 15, FONT_WEIGHT_BOLD))
         problems_label.setStyleSheet("color: #1a1a1a; margin-bottom: 8px;")  # 深色文字，提高对比度
         main_layout.addWidget(problems_label)
         
@@ -128,7 +144,7 @@ class MainWindow(QMainWindow):
         
         # 工具箱
         tools_label = QLabel("🔧 工具箱")
-        tools_label.setFont(QFont("Arial", 15, QFont.Weight.Bold))
+        tools_label.setFont(QFont("Arial", 15, FONT_WEIGHT_BOLD))
         tools_label.setStyleSheet("color: #1a1a1a; margin-top: 10px; margin-bottom: 8px;")  # 深色文字，提高对比度
         main_layout.addWidget(tools_label)
         
@@ -161,7 +177,7 @@ class MainWindow(QMainWindow):
                     border-color: #1890ff;
                 }
             """)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setCursor(POINTING_HAND_CURSOR)
             if tool_type == "collect_info":
                 btn.clicked.connect(lambda: self.info_collect_requested.emit())
             else:
@@ -290,7 +306,7 @@ class MainWindow(QMainWindow):
         """处理问题修复点击"""
         self.problem_fix_requested.emit(problem_type)
     
-    def show_message(self, title: str, message: str, icon=QMessageBox.Icon.Information):
+    def show_message(self, title: str, message: str, icon=ICON_INFORMATION):
         """显示消息框"""
         msg = QMessageBox(self)
         msg.setIcon(icon)

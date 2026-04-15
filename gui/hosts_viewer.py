@@ -7,12 +7,26 @@ Hosts配置查看窗口
 
 import os
 import sys
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QLabel, QMessageBox, QHeaderView
+from gui.qt_api import (
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QTableWidget,
+    QTableWidgetItem,
+    QPushButton,
+    QLabel,
+    QMessageBox,
+    QHeaderView,
+    QFont,
+    NO_EDIT_TRIGGERS,
+    SELECT_ROWS,
+    HV_STRETCH,
+    HV_RESIZE_TO_CONTENTS,
+    COLOR_GRAY_FOREGROUND,
+    STD_YES_NO,
+    STD_YES,
+    FONT_WEIGHT_BOLD,
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
 
 # 添加路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,7 +54,7 @@ class HostsViewer(QDialog):
         
         # 标题
         title_label = QLabel("📋 当前已绑定的千图相关域名")
-        title_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        title_label.setFont(QFont("Arial", 14, FONT_WEIGHT_BOLD))
         layout.addWidget(title_label)
         
         # 表格
@@ -49,15 +63,15 @@ class HostsViewer(QDialog):
         self.table.setHorizontalHeaderLabels(["域名", "IP地址", "行号", "操作"])
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setAlternatingRowColors(True)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setEditTriggers(NO_EDIT_TRIGGERS)
+        self.table.setSelectionBehavior(SELECT_ROWS)
         
         # 设置列宽
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(0, HV_STRETCH)
+        header.setSectionResizeMode(1, HV_RESIZE_TO_CONTENTS)
+        header.setSectionResizeMode(2, HV_RESIZE_TO_CONTENTS)
+        header.setSectionResizeMode(3, HV_RESIZE_TO_CONTENTS)
         
         layout.addWidget(self.table)
         
@@ -140,7 +154,7 @@ class HostsViewer(QDialog):
                 ip = info.get('ip', '未绑定')
                 ip_item = QTableWidgetItem(ip)
                 if ip == '未绑定':
-                    ip_item.setForeground(Qt.GlobalColor.gray)
+                    ip_item.setForeground(COLOR_GRAY_FOREGROUND)
                 self.table.setItem(row, 1, ip_item)
                 
                 # 行号
@@ -186,10 +200,10 @@ class HostsViewer(QDialog):
             self,
             "确认解绑",
             f"确定要解绑域名 {domain} 吗？",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            STD_YES_NO,
         )
         
-        if reply == QMessageBox.StandardButton.Yes:
+        if reply == STD_YES:
             try:
                 success = unbind_domain(domain, auto_fix=True)
                 if success:
@@ -210,10 +224,10 @@ class HostsViewer(QDialog):
             self,
             "确认解绑",
             "确定要解绑所有千图相关域名吗？\n\n此操作不可撤销！",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            STD_YES_NO,
         )
         
-        if reply == QMessageBox.StandardButton.Yes:
+        if reply == STD_YES:
             try:
                 success = unbind_all_qiantu(auto_fix=True)
                 if success:
